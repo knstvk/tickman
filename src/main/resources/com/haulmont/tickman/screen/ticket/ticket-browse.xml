@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<window xmlns="http://jmix.io/schema/ui/window"
+        xmlns:c="http://jmix.io/schema/ui/jpql-condition"
+        caption="msg://ticketBrowse.caption"
+        focusComponent="ticketsTable">
+    <data readOnly="true">
+        <collection id="ticketsDc"
+                    class="com.haulmont.tickman.entity.Ticket">
+            <loader id="ticketsDl"/>
+        </collection>
+    </data>
+    <dialogMode height="600"
+                width="800"/>
+    <layout spacing="true">
+        <groupTable id="ticketsTable"
+                    width="100%"
+                    dataContainer="ticketsDc"
+                    multiselect="true">
+            <actions>
+                <action id="create" type="create"/>
+                <action id="edit" type="edit"/>
+                <action id="refresh" type="refresh"/>
+            </actions>
+            <columns>
+                <column id="id"/>
+                <column id="title"/>
+                <column id="estimate"/>
+            </columns>
+            <rowsCount/>
+            <buttonsPanel id="buttonsPanel"
+                          alwaysVisible="true">
+                <button id="createBtn" action="ticketsTable.create"/>
+                <button id="editBtn" action="ticketsTable.edit"/>
+                <button id="refreshBtn" action="ticketsTable.refresh"/>
+            </buttonsPanel>
+        </groupTable>
+        <hbox id="lookupActions" spacing="true" visible="false">
+            <button action="lookupSelectAction"/>
+            <button action="lookupCancelAction"/>
+        </hbox>
+    </layout>
+</window>
