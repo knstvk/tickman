@@ -6,7 +6,9 @@
     <data readOnly="true">
         <collection id="ticketsDc"
                     class="com.haulmont.tickman.entity.Ticket">
-            <loader id="ticketsDl"/>
+            <loader id="ticketsDl">
+                <query>select t from tickman_Ticket t order by t.num</query>
+            </loader>
         </collection>
     </data>
     <dialogMode height="600"
@@ -17,21 +19,21 @@
                     dataContainer="ticketsDc"
                     multiselect="true">
             <actions>
-                <action id="create" type="create"/>
                 <action id="edit" type="edit"/>
                 <action id="refresh" type="refresh"/>
             </actions>
             <columns>
-                <column id="id"/>
+                <column id="num"/>
+                <column id="htmlUrl"/>
                 <column id="title"/>
                 <column id="estimate"/>
             </columns>
             <rowsCount/>
             <buttonsPanel id="buttonsPanel"
                           alwaysVisible="true">
-                <button id="createBtn" action="ticketsTable.create"/>
                 <button id="editBtn" action="ticketsTable.edit"/>
                 <button id="refreshBtn" action="ticketsTable.refresh"/>
+                <button id="importBtn" caption="Import"/>
             </buttonsPanel>
         </groupTable>
         <hbox id="lookupActions" spacing="true" visible="false">

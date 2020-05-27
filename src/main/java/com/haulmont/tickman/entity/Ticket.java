@@ -1,23 +1,47 @@
 package com.haulmont.tickman.entity;
 
 import io.jmix.core.metamodel.annotation.InstanceName;
-import io.jmix.core.metamodel.annotation.ModelObject;
-import io.jmix.core.metamodel.annotation.ModelProperty;
-import io.jmix.data.entity.BaseIntegerIdEntity;
 
-@ModelObject(name = "tickman_Ticket")
-public class Ticket extends BaseIntegerIdEntity {
+import javax.persistence.*;
+
+@Entity(name = "tickman_Ticket")
+@Table(name = "TICKMAN_TICKET")
+public class Ticket implements io.jmix.core.Entity {
     private static final long serialVersionUID = 6942806518596867842L;
 
-    @ModelProperty
+    @Id
+    @Column(name = "NUM", nullable = false)
+    private Integer num;
+
+    @Column(name = "HTML_URL")
+    private String htmlUrl;
+
+    @Column(name = "TITLE")
     @InstanceName
     private String title;
 
-    @ModelProperty
+    @Lob
+    @Column(name = "DESCRIPTION")
     private String description;
 
-    @ModelProperty
+    @Column(name = "ESTIMATE")
     private Integer estimate;
+
+    public String getHtmlUrl() {
+        return htmlUrl;
+    }
+
+    public void setHtmlUrl(String htmlUrl) {
+        this.htmlUrl = htmlUrl;
+    }
+
+    public Integer getNum() {
+        return num;
+    }
+
+    public void setNum(Integer num) {
+        this.num = num;
+    }
 
     public Integer getEstimate() {
         return estimate;

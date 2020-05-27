@@ -5,7 +5,7 @@ public class GitHubIssue {
     private Integer number;
     private String title;
     private String body;
-    private String html_url;
+    private String htmlUrl;
 
     public Integer getNumber() {
         return number;
@@ -31,11 +31,11 @@ public class GitHubIssue {
         this.body = body;
     }
 
-    public String getHtml_url() {
-        return html_url;
+    public String getHtmlUrl() {
+        return htmlUrl;
     }
 
-    public void setHtml_url(String html_url) {
-        this.html_url = html_url;
+    public void setHtmlUrl(String htmlUrl) {
+        this.htmlUrl = htmlUrl;
     }
 }
