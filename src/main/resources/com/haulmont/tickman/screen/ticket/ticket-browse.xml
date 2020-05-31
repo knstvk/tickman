@@ -13,7 +13,7 @@
     </data>
     <dialogMode height="600"
                 width="800"/>
-    <layout spacing="true">
+    <layout spacing="true" expand="ticketsTable">
         <groupTable id="ticketsTable"
                     width="100%"
                     dataContainer="ticketsDc"
@@ -33,6 +33,9 @@
                 <button id="editBtn" action="ticketsTable.edit"/>
                 <button id="refreshBtn" action="ticketsTable.refresh"/>
                 <button id="importBtn" caption="Import"/>
+                <hbox>
+                    <progressBar id="progressBar" caption="Importing" align="MIDDLE_LEFT" width="200px" visible="false"/>
+                </hbox>
             </buttonsPanel>
         </groupTable>
         <hbox id="lookupActions" spacing="true" visible="false">

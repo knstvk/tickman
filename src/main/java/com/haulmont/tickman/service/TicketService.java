@@ -109,8 +109,11 @@ public class TicketService {
         return resultList;
     }
 
-    private long loadZenHubInfo(ZenHub zenHub, Ticket ticket) {
+    public long loadZenHubInfo(@Nullable ZenHub zenHub, Ticket ticket) {
         log.info("Loading ZenHub issue " + ticket.getNum());
+        if (zenHub == null) {
+            zenHub = zenhubBuilder().build().create(ZenHub.class);
+        }
         Call<ZenHubIssue> issueCall = zenHub.getIssue(properties.getRepoId(), ticket.getNum());
         try {
             Response<ZenHubIssue> response = issueCall.execute();
@@ -123,10 +126,11 @@ public class TicketService {
 
             long rateLimit = getHeaderLongValue(response, "X-RateLimit-Limit");
             long rateLimitUsed = getHeaderLongValue(response, "X-RateLimit-Used");
-            if (rateLimit - rateLimitUsed <= 0)
+            if (rateLimit - rateLimitUsed <= 0) {
                 return getHeaderLongValue(response, "X-RateLimit-Reset");
-            else
+            } else {
                 return 0;
+            }
         } catch (IOException e) {
             throw new RuntimeException("Error accessing " + issueCall.request().url(), e);
         }
