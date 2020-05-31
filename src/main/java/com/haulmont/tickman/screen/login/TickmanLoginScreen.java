@@ -8,18 +8,18 @@ import io.jmix.ui.Notifications;
 import io.jmix.ui.ScreenBuilders;
 import io.jmix.ui.UiProperties;
 import io.jmix.ui.action.Action;
-import io.jmix.ui.component.LookupField;
+import io.jmix.ui.component.ComboBox;
 import io.jmix.ui.component.PasswordField;
 import io.jmix.ui.component.TextField;
 import io.jmix.ui.navigation.Route;
 import io.jmix.ui.screen.*;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Locale;
 
 @UiController("tickman_LoginScreen")
@@ -34,7 +34,7 @@ public class TickmanLoginScreen extends Screen {
     private PasswordField passwordField;
 
     @Autowired
-    private LookupField<Locale> localesField;
+    private ComboBox<Locale> localesField;
 
     @Autowired
     private Notifications notifications;

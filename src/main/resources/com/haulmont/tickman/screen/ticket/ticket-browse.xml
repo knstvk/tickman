@@ -24,7 +24,6 @@
             </actions>
             <columns>
                 <column id="num"/>
-                <column id="htmlUrl"/>
                 <column id="title"/>
                 <column id="estimate"/>
             </columns>

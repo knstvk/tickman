@@ -43,10 +43,10 @@
                     </cssLayout>
                     <hbox id="rememberLocalesBox"
                           stylename="c-login-remember-locales">
-                        <lookupField id="localesField"
-                                     nullOptionVisible="false"
-                                     stylename="c-login-locale"
-                                     textInputAllowed="false"/>
+                        <comboBox id="localesField"
+                                  nullOptionVisible="false"
+                                  stylename="c-login-locale"
+                                  textInputAllowed="false"/>
                     </hbox>
 
                     <button id="loginButton"

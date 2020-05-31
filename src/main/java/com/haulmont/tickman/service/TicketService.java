@@ -18,10 +18,13 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+import javax.annotation.Nullable;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.io.IOException;
-import java.util.Collections;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,61 +47,106 @@ public class TicketService {
         entityManager.createQuery("delete from tickman_Ticket t").executeUpdate();
     }
 
-    public List<Ticket> loadTickets() {
-        List<GitHubIssue> githubIssues;
+    public List<Ticket> loadTicketsFromGitHub() {
+        List<GitHubIssue> githubIssues = new ArrayList<>();
 
         GitHub gitHub = githubBuilder().build().create(GitHub.class);
-        ZenHub zenHub = zenhubBuilder().build().create(ZenHub.class);
 
-        log.info("Loading GitHub issues");
-        Call<List<GitHubIssue>> issuesCall = gitHub.listIssues(properties.getOrganization(), properties.getRepo());
-        try {
-            Response<List<GitHubIssue>> response = issuesCall.execute();
-            if (!response.isSuccessful()) {
-                throw new RuntimeException("Unsuccessful response: " + response);
+        int page = 1;
+        while (true) {
+            log.info("Loading GitHub issues, page " + page);
+            Call<List<GitHubIssue>> issuesCall = gitHub.listIssues(properties.getOrganization(), properties.getRepo(), "open", page);
+            try {
+                Response<List<GitHubIssue>> response = issuesCall.execute();
+                if (!response.isSuccessful()) {
+
+                    throw new RuntimeException("Unsuccessful response: " + response);
+                }
+                if (response.body() != null) {
+                    githubIssues.addAll(response.body());
+
+                    String link = response.headers().get("Link");
+                    if (link != null && link.contains("rel=\"next\"")) {
+                        page++;
+                    } else {
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Error accessing " + issuesCall.request().url(), e);
             }
-            githubIssues = response.body();
-        } catch (IOException e) {
-            throw new RuntimeException("Error accessing " + issuesCall.request().url(), e);
         }
 
-        if (githubIssues != null) {
-            return githubIssues.stream()
-                    .map(issue -> {
-                        Ticket ticket = dataManager.create(Ticket.class);
-                        ticket.setNum(issue.getNumber());
-                        ticket.setHtmlUrl(issue.getHtmlUrl());
-                        ticket.setTitle(issue.getTitle());
-                        ticket.setDescription(issue.getBody());
-                        ticket.setEstimate(loadEstimate(zenHub, issue.getNumber()));
-                        dataManager.save(ticket);
-                        return ticket;
-                    })
-                    .collect(Collectors.toList());
-        } else {
-            return Collections.emptyList();
-        }
+        return githubIssues.stream()
+                .map(issue -> {
+                    Ticket ticket = dataManager.create(Ticket.class);
+                    ticket.setNum(issue.getNumber());
+                    ticket.setHtmlUrl(issue.getHtmlUrl());
+                    ticket.setTitle(issue.getTitle());
+                    ticket.setDescription(issue.getBody());
+                    return dataManager.save(ticket);
+                })
+                .collect(Collectors.toList());
     }
 
-    private Integer loadEstimate(ZenHub zenHub, Integer number) {
-        log.info("Loading ZenHub issue " + number);
-        Call<ZenHubIssue> issueCall = zenHub.getIssue(properties.getRepoId(), number);
+    public List<Ticket> updateTicketsFromZenHub(List<Ticket> tickets) {
+        List<Ticket> resultList = new ArrayList<>();
+        ZenHub zenHub = zenhubBuilder().build().create(ZenHub.class);
+
+        for (Ticket ticket : tickets) {
+            long resetSec = loadZenHubInfo(zenHub, ticket);
+            resultList.add(dataManager.save(ticket));
+            long waitSec = resetSec - Instant.now().getEpochSecond();
+            if (waitSec >= 0) {
+                log.info("Sleeping for " + (waitSec + 1) + " sec to satisfy ZenHub rate limit");
+                try {
+                    Thread.sleep((waitSec + 1) * 1000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return resultList;
+    }
+
+    private long loadZenHubInfo(ZenHub zenHub, Ticket ticket) {
+        log.info("Loading ZenHub issue " + ticket.getNum());
+        Call<ZenHubIssue> issueCall = zenHub.getIssue(properties.getRepoId(), ticket.getNum());
         try {
             Response<ZenHubIssue> response = issueCall.execute();
             if (!response.isSuccessful()) {
                 throw new RuntimeException("Unsuccessful response: " + response);
             }
             ZenHubIssue issue = response.body();
-            if (issue != null) {
-                ZenHubEstimate estimate = issue.getEstimate();
-                if (estimate != null) {
-                    return estimate.getValue();
-                }
-            }
-            return null;
+
+            ticket.setEstimate(getEstimate(issue));
+
+            long rateLimit = getHeaderLongValue(response, "X-RateLimit-Limit");
+            long rateLimitUsed = getHeaderLongValue(response, "X-RateLimit-Used");
+            if (rateLimit - rateLimitUsed <= 0)
+                return getHeaderLongValue(response, "X-RateLimit-Reset");
+            else
+                return 0;
         } catch (IOException e) {
             throw new RuntimeException("Error accessing " + issueCall.request().url(), e);
         }
+    }
+
+    private long getHeaderLongValue(Response<?> response, String name) {
+        String str = response.headers().get(name);
+        if (str == null)
+            throw new RuntimeException("Header " + name + " not set");
+        return Long.parseLong(str);
+    }
+
+    private Integer getEstimate(ZenHubIssue issue) {
+        if (issue != null) {
+            ZenHubEstimate estimate = issue.getEstimate();
+            if (estimate != null) {
+                return estimate.getValue();
+            }
+        }
+        return null;
     }
 
     private Retrofit.Builder githubBuilder() {
