@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <menu-config xmlns="http://jmix.io/schema/ui/menu">
-    <menu id="application" caption="msg://com.haulmont.tickman/menu.application">
-
-        <item screen="tickman_Ticket.browse" caption="msg://com.haulmont.tickman.screen.ticket/ticketBrowse.caption"/>
-        <item screen="tickman_Team.browse" caption="msg://com.haulmont.tickman.screen.team/teamBrowse.caption"/>
-    </menu>
+    <item screen="tickman_Ticket.browse" caption="msg://com.haulmont.tickman.screen.ticket/ticketBrowse.caption"/>
+    <item screen="tickman_Team.browse" caption="msg://com.haulmont.tickman.screen.team/teamBrowse.caption"/>
 </menu-config>

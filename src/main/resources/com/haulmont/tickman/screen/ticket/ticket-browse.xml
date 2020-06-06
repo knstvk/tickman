@@ -10,7 +10,7 @@
                 <property name="team" fetchPlan="_minimal"/>
             </fetchPlan>
             <loader id="ticketsDl">
-                <query>select t from tickman_Ticket t order by t.num
+                <query>select t from tickman_Ticket t order by t.num desc
                     <condition>
                         <and>
                             <c:jpql>
