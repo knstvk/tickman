@@ -1,5 +1,7 @@
 package com.haulmont.tickman.screen.ticket;
 
+import com.haulmont.tickman.TickmanProperties;
+import com.haulmont.tickman.entity.Team;
 import com.haulmont.tickman.entity.Ticket;
 import com.haulmont.tickman.service.TicketService;
 import io.jmix.core.DataManager;
@@ -9,18 +11,20 @@ import io.jmix.ui.UiComponents;
 import io.jmix.ui.action.DialogAction;
 import io.jmix.ui.component.*;
 import io.jmix.ui.executor.BackgroundTask;
-import io.jmix.ui.executor.BackgroundTaskHandler;
 import io.jmix.ui.executor.BackgroundWorker;
 import io.jmix.ui.executor.TaskLifeCycle;
-import io.jmix.ui.screen.*;
+import io.jmix.ui.model.CollectionContainer;
+import io.jmix.ui.model.CollectionLoader;
 import io.jmix.ui.screen.LookupComponent;
+import io.jmix.ui.screen.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @UiController("tickman_Ticket.browse")
 @UiDescriptor("ticket-browse.xml")
@@ -49,7 +53,30 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     private BackgroundWorker backgroundWorker;
 
     @Autowired
+    private TickmanProperties properties;
+
+    @Autowired
     private ProgressBar progressBar;
+
+    @Autowired
+    private ComboBox<String> milestoneFilterField;
+
+    @Autowired
+    private CollectionLoader<Ticket> ticketsDl;
+    @Autowired
+    private CollectionContainer<Ticket> ticketsDc;
+
+    @Subscribe
+    public void onAfterShow(AfterShowEvent event) {
+        List<String> milestones = ticketsDc.getItems().stream()
+                .map(Ticket::getMilestone)
+                .filter(Objects::nonNull)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+        milestoneFilterField.setOptionsList(milestones);
+    }
+
 
     @Subscribe("importBtn")
     public void onImportBtnClick(Button.ClickEvent event) {
@@ -84,6 +111,18 @@ public class TicketBrowse extends StandardLookup<Ticket> {
         link.setUrl(ticket.getHtmlUrl());
         link.setTarget("_blank");
         return link;
+    }
+
+    @Subscribe("teamFilterField")
+    public void onTeamFilterFieldValueChange(HasValue.ValueChangeEvent<Team> event) {
+        ticketsDl.setParameter("team", event.getValue());
+        ticketsDl.load();
+    }
+
+    @Subscribe("milestoneFilterField")
+    public void onMilestoneFilterFieldValueChange(HasValue.ValueChangeEvent<String> event) {
+        ticketsDl.setParameter("milestone", event.getValue());
+        ticketsDl.load();
     }
 
     private class UpdateFromZenHubTask extends BackgroundTask<Integer, Void> {

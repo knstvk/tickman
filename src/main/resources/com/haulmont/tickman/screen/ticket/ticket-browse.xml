@@ -6,18 +6,56 @@
     <data readOnly="true">
         <collection id="ticketsDc"
                     class="com.haulmont.tickman.entity.Ticket">
+            <fetchPlan extends="_base">
+                <property name="team" fetchPlan="_minimal"/>
+            </fetchPlan>
             <loader id="ticketsDl">
-                <query>select t from tickman_Ticket t order by t.num</query>
+                <query>select t from tickman_Ticket t order by t.num
+                    <condition>
+                        <and>
+                            <c:jpql>
+                                <c:where>t.team = :team</c:where>
+                            </c:jpql>
+                            <c:jpql>
+                                <c:where>t.milestone = :milestone</c:where>
+                            </c:jpql>
+                        </and>
+                    </condition>
+                </query>
+            </loader>
+        </collection>
+        <collection id="teamsDc" class="com.haulmont.tickman.entity.Team">
+            <fetchPlan extends="_base"/>
+            <loader id="teamsDl">
+                <query>
+                    <![CDATA[select e from tickman_Team e order by e.name]]>
+                </query>
             </loader>
         </collection>
     </data>
     <dialogMode height="600"
                 width="800"/>
     <layout spacing="true" expand="ticketsTable">
+        <groupBox caption="Filter" collapsable="true">
+            <gridLayout spacing="true">
+                <columns count="2"/>
+                <rows>
+                    <row>
+                        <label value="Team" align="MIDDLE_LEFT"/>
+                        <entityComboBox id="teamFilterField" optionsContainer="teamsDc"/>
+                    </row>
+                    <row>
+                        <label value="Milestone" align="MIDDLE_LEFT"/>
+                        <comboBox id="milestoneFilterField"/>
+                    </row>
+                </rows>
+            </gridLayout>
+        </groupBox>
         <groupTable id="ticketsTable"
                     width="100%"
                     dataContainer="ticketsDc"
-                    multiselect="true">
+                    multiselect="true"
+                    aggregatable="true">
             <actions>
                 <action id="edit" type="edit"/>
                 <action id="refresh" type="refresh"/>
@@ -25,7 +63,14 @@
             <columns>
                 <column id="num"/>
                 <column id="title"/>
-                <column id="estimate"/>
+                <column id="estimate">
+                    <aggregation type="SUM"/>
+                </column>
+                <column id="milestone"/>
+                <column id="assignee"/>
+                <column id="team"/>
+                <column id="labels"/>
+                <column id="epic"/>
             </columns>
             <rowsCount/>
             <buttonsPanel id="buttonsPanel"

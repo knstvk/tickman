@@ -1,8 +1,11 @@
 package com.haulmont.tickman.service;
 
+import com.google.common.base.CharMatcher;
+import com.google.common.base.Splitter;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.GsonBuilder;
 import com.haulmont.tickman.TickmanProperties;
+import com.haulmont.tickman.entity.Team;
 import com.haulmont.tickman.entity.Ticket;
 import com.haulmont.tickman.retrofit.*;
 import io.jmix.core.DataManager;
@@ -23,9 +26,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.io.IOException;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -59,7 +62,6 @@ public class TicketService {
             try {
                 Response<List<GitHubIssue>> response = issuesCall.execute();
                 if (!response.isSuccessful()) {
-
                     throw new RuntimeException("Unsuccessful response: " + response);
                 }
                 if (response.body() != null) {
@@ -77,6 +79,8 @@ public class TicketService {
             }
         }
 
+        List<Team> teams = dataManager.load(Team.class).list();
+
         return githubIssues.stream()
                 .map(issue -> {
                     Ticket ticket = dataManager.create(Ticket.class);
@@ -84,9 +88,30 @@ public class TicketService {
                     ticket.setHtmlUrl(issue.getHtmlUrl());
                     ticket.setTitle(issue.getTitle());
                     ticket.setDescription(issue.getBody());
+                    ticket.setMilestone(issue.getMilestone() != null ? issue.getMilestone().getTitle() : null);
+                    ticket.setAssignee(issue.getAssignee() != null ? issue.getAssignee().getLogin() : null);
+                    if (ticket.getAssignee() != null) {
+                        ticket.setTeam(selectTeam(teams, ticket.getAssignee()));
+                    }
+
+                    String labels = null;
+                    List<GitHubLabel> labelList = issue.getLabels();
+                    if (labelList != null) {
+                        labels = labelList.stream().map(GitHubLabel::getName).collect(Collectors.joining(", "));
+                    }
+                    ticket.setLabels(labels);
+
                     return dataManager.save(ticket);
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Nullable
+    private Team selectTeam(List<Team> teams, String assignee) {
+        return teams.stream()
+                .filter(team -> team.getMembers().contains(assignee))
+                .findAny()
+                .orElse(null);
     }
 
     public List<Ticket> updateTicketsFromZenHub(List<Ticket> tickets) {
@@ -117,12 +142,12 @@ public class TicketService {
         Call<ZenHubIssue> issueCall = zenHub.getIssue(properties.getRepoId(), ticket.getNum());
         try {
             Response<ZenHubIssue> response = issueCall.execute();
-            if (!response.isSuccessful()) {
+            if (!response.isSuccessful() || response.body() == null) {
                 throw new RuntimeException("Unsuccessful response: " + response);
             }
             ZenHubIssue issue = response.body();
-
             ticket.setEstimate(getEstimate(issue));
+            ticket.setEpic(issue.isEpic());
 
             long rateLimit = getHeaderLongValue(response, "X-RateLimit-Limit");
             long rateLimitUsed = getHeaderLongValue(response, "X-RateLimit-Used");
