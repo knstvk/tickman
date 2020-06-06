@@ -67,6 +67,11 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     private CollectionContainer<Ticket> ticketsDc;
 
     @Subscribe
+    public void onBeforeShow(BeforeShowEvent event) {
+        ticketsDl.setParameter("epic", false);
+    }
+
+    @Subscribe
     public void onAfterShow(AfterShowEvent event) {
         List<String> milestones = ticketsDc.getItems().stream()
                 .map(Ticket::getMilestone)
@@ -122,6 +127,16 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     @Subscribe("milestoneFilterField")
     public void onMilestoneFilterFieldValueChange(HasValue.ValueChangeEvent<String> event) {
         ticketsDl.setParameter("milestone", event.getValue());
+        ticketsDl.load();
+    }
+
+    @Subscribe("epicFilterField")
+    public void onEpicFilterFieldValueChange(HasValue.ValueChangeEvent<Boolean> event) {
+        if (event.getValue() == null || !event.getValue()) {
+            ticketsDl.setParameter("epic", false);
+        } else {
+            ticketsDl.removeParameter("epic");
+        }
         ticketsDl.load();
     }
 

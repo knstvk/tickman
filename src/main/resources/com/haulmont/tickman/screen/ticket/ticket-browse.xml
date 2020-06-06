@@ -19,6 +19,9 @@
                             <c:jpql>
                                 <c:where>t.milestone = :milestone</c:where>
                             </c:jpql>
+                            <c:jpql>
+                                <c:where>t.epic = :epic</c:where>
+                            </c:jpql>
                         </and>
                     </condition>
                 </query>
@@ -38,7 +41,7 @@
     <layout spacing="true" expand="ticketsTable">
         <groupBox caption="Filter" collapsable="true">
             <gridLayout spacing="true">
-                <columns count="2"/>
+                <columns count="4"/>
                 <rows>
                     <row>
                         <label value="Team" align="MIDDLE_LEFT"/>
@@ -47,6 +50,8 @@
                     <row>
                         <label value="Milestone" align="MIDDLE_LEFT"/>
                         <comboBox id="milestoneFilterField"/>
+                        <label width="50px"/>
+                        <checkBox id="epicFilterField" caption="Show Epics" align="MIDDLE_LEFT"/>
                     </row>
                 </rows>
             </gridLayout>
