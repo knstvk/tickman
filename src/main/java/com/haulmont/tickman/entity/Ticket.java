@@ -41,11 +41,22 @@ public class Ticket implements io.jmix.core.Entity, Versioned {
     @JoinColumn(name = "TEAM_ID")
     private Team team;
 
+    @Column(name = "PIPELINE")
+    private String pipeline;
+
     @Column(name = "LABELS")
     private String labels;
 
     @Column(name = "EPIC")
     private Boolean epic;
+
+    public String getPipeline() {
+        return pipeline;
+    }
+
+    public void setPipeline(String pipeline) {
+        this.pipeline = pipeline;
+    }
 
     @Override
     public Integer getVersion() {

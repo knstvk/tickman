@@ -74,6 +74,7 @@
                 <column id="milestone"/>
                 <column id="assignee"/>
                 <column id="team"/>
+                <column id="pipeline"/>
                 <column id="labels"/>
                 <column id="epic"/>
             </columns>

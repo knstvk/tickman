@@ -31,6 +31,7 @@
             <column name="ESTIMATE" type="int"/>
             <column name="ASSIGNEE" type="varchar(255)"/>
             <column name="MILESTONE" type="varchar(255)"/>
+            <column name="PIPELINE" type="varchar(255)"/>
             <column name="LABELS" type="varchar(255)"/>
             <column name="EPIC" type="boolean"/>
             <column name="TEAM_ID" type="int">

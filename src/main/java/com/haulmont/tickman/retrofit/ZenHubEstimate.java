@@ -2,13 +2,13 @@ package com.haulmont.tickman.retrofit;
 
 public class ZenHubEstimate {
 
-    private Integer value;
+    private Integer estimate;
 
-    public Integer getValue() {
-        return value;
+    public Integer getEstimate() {
+        return estimate;
     }
 
-    public void setValue(Integer value) {
-        this.value = value;
+    public void setEstimate(Integer estimate) {
+        this.estimate = estimate;
     }
 }

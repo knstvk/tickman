@@ -1,7 +1,5 @@
 package com.haulmont.tickman.service;
 
-import com.google.common.base.CharMatcher;
-import com.google.common.base.Splitter;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.GsonBuilder;
 import com.haulmont.tickman.TickmanProperties;
@@ -28,7 +26,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -148,6 +145,7 @@ public class TicketService {
             ZenHubIssue issue = response.body();
             ticket.setEstimate(getEstimate(issue));
             ticket.setEpic(issue.isEpic());
+            ticket.setPipeline(issue.getPipeline() != null ? issue.getPipeline().getName() : null);
 
             long rateLimit = getHeaderLongValue(response, "X-RateLimit-Limit");
             long rateLimitUsed = getHeaderLongValue(response, "X-RateLimit-Used");
@@ -170,12 +168,32 @@ public class TicketService {
 
     private Integer getEstimate(ZenHubIssue issue) {
         if (issue != null) {
-            ZenHubEstimate estimate = issue.getEstimate();
+            ZenHubEstimateValue estimate = issue.getEstimate();
             if (estimate != null) {
                 return estimate.getValue();
             }
         }
         return null;
+    }
+
+    public void updateEstimate(Ticket ticket) {
+        log.info("Updating ZenHub estimate " + ticket.getNum());
+        ZenHub zenHub = zenhubBuilder().build().create(ZenHub.class);
+        ZenHubEstimate zenHubEstimate = new ZenHubEstimate();
+        zenHubEstimate.setEstimate(ticket.getEstimate());
+        Call<ZenHubEstimate> call = zenHub.setEstimate(properties.getRepoId(), ticket.getNum(), zenHubEstimate);
+        try {
+            Response<ZenHubEstimate> response = call.execute();
+            if (!response.isSuccessful() || response.body() == null) {
+                throw new RuntimeException("Unsuccessful response: " + response);
+            }
+            ZenHubEstimate estimate = response.body();
+            if (!estimate.getEstimate().equals(ticket.getEstimate())) {
+                throw new RuntimeException("ZenHub update failed");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error accessing " + call.request().url(), e);
+        }
     }
 
     private Retrofit.Builder githubBuilder() {
