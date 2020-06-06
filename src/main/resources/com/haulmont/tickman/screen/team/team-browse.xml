@@ -16,7 +16,7 @@
     </data>
     <dialogMode height="600"
                 width="800"/>
-    <layout spacing="true">
+    <layout spacing="true" expand="teamsTable">
         <groupTable id="teamsTable"
                     width="100%"
                     dataContainer="teamsDc">
