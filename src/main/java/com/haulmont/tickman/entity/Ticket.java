@@ -31,15 +31,13 @@ public class Ticket implements io.jmix.core.Entity, Versioned {
     @Column(name = "ESTIMATE")
     private Integer estimate;
 
-    @Column(name = "MILESTONE")
-    private String milestone;
-
-    @Column(name = "ASSIGNEE")
-    private String assignee;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "MILESTONE_ID")
+    private Milestone milestone;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "TEAM_ID")
-    private Team team;
+    @JoinColumn(name = "ASSIGNEE_ID")
+    private Assignee assignee;
 
     @Column(name = "PIPELINE")
     private String pipeline;
@@ -49,6 +47,22 @@ public class Ticket implements io.jmix.core.Entity, Versioned {
 
     @Column(name = "EPIC")
     private Boolean epic;
+
+    public void setAssignee(Assignee assignee) {
+        this.assignee = assignee;
+    }
+
+    public Assignee getAssignee() {
+        return assignee;
+    }
+
+    public void setMilestone(Milestone milestone) {
+        this.milestone = milestone;
+    }
+
+    public Milestone getMilestone() {
+        return milestone;
+    }
 
     public String getPipeline() {
         return pipeline;
@@ -66,30 +80,6 @@ public class Ticket implements io.jmix.core.Entity, Versioned {
     @Override
     public void setVersion(Integer version) {
         this.version = version;
-    }
-
-    public void setTeam(Team team) {
-        this.team = team;
-    }
-
-    public Team getTeam() {
-        return team;
-    }
-
-    public String getMilestone() {
-        return milestone;
-    }
-
-    public void setMilestone(String milestone) {
-        this.milestone = milestone;
-    }
-
-    public String getAssignee() {
-        return assignee;
-    }
-
-    public void setAssignee(String assignee) {
-        this.assignee = assignee;
     }
 
     public Boolean getEpic() {

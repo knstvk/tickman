@@ -7,14 +7,19 @@
         <collection id="ticketsDc"
                     class="com.haulmont.tickman.entity.Ticket">
             <fetchPlan extends="_base">
-                <property name="team" fetchPlan="_minimal"/>
+                <property name="milestone" fetchPlan="_minimal">
+                    <property name="title"/>
+                </property>
+                <property name="assignee" fetchPlan="_minimal">
+                    <property name="team" fetchPlan="_minimal"/>
+                </property>
             </fetchPlan>
             <loader id="ticketsDl">
                 <query>select t from tickman_Ticket t order by t.num desc
                     <condition>
                         <and>
                             <c:jpql>
-                                <c:where>t.team = :team</c:where>
+                                <c:where>t.assignee.team = :team</c:where>
                             </c:jpql>
                             <c:jpql>
                                 <c:where>t.assignee = :assignee</c:where>
@@ -84,7 +89,7 @@
                 </column>
                 <column id="milestone"/>
                 <column id="assignee"/>
-                <column id="team"/>
+                <column id="assignee.team"/>
                 <column id="pipeline"/>
                 <column id="labels"/>
                 <column id="epic"/>

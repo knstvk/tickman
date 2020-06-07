@@ -14,13 +14,15 @@ public class TickmanProperties {
     private final String repo;
     private final int repoId;
     private final String zenHubToken; // TICKMAN_ZENHUBTOKEN
+    private final String gitHubToken; // TICKMAN_GITHUBTOKEN
     private final List<Integer> estimateValues;
 
-    public TickmanProperties(String organization, String repo, int repoId, String zenHubToken, List<String> estimateValues) {
+    public TickmanProperties(String organization, String repo, int repoId, String zenHubToken, String gitHubToken, List<String> estimateValues) {
         this.organization = organization;
         this.repo = repo;
         this.repoId = repoId;
         this.zenHubToken = zenHubToken;
+        this.gitHubToken = gitHubToken;
         this.estimateValues = estimateValues != null ? estimateValues.stream().map(Integer::valueOf).collect(Collectors.toList()) : null;
     }
 
@@ -38,6 +40,10 @@ public class TickmanProperties {
 
     public String getZenHubToken() {
         return zenHubToken;
+    }
+
+    public String getGitHubToken() {
+        return gitHubToken;
     }
 
     public List<Integer> getEstimateValues() {

@@ -1,13 +1,17 @@
 package com.haulmont.tickman.screen.ticket;
 
 import com.haulmont.tickman.TickmanProperties;
+import com.haulmont.tickman.entity.Assignee;
+import com.haulmont.tickman.entity.Milestone;
 import com.haulmont.tickman.entity.Team;
 import com.haulmont.tickman.entity.Ticket;
 import com.haulmont.tickman.service.TicketService;
 import io.jmix.core.DataManager;
 import io.jmix.ui.Dialogs;
 import io.jmix.ui.Notifications;
+import io.jmix.ui.ScreenBuilders;
 import io.jmix.ui.UiComponents;
+import io.jmix.ui.action.Action;
 import io.jmix.ui.action.DialogAction;
 import io.jmix.ui.component.*;
 import io.jmix.ui.executor.BackgroundTask;
@@ -23,7 +27,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @UiController("tickman_Ticket.browse")
 @UiDescriptor("ticket-browse.xml")
@@ -32,8 +40,12 @@ import java.util.List;
 public class TicketBrowse extends StandardLookup<Ticket> {
 
     private static final Logger log = LoggerFactory.getLogger(TicketBrowse.class);
-    public static final String NO_MILESTONE = "<no milestone>";
-    public static final String NO_ASSIGNEE = "<no assignee>";
+
+    public static final String NO_MILESTONE_CAPTION = "<no milestone>";
+    public static final Milestone NO_MILESTONE = new Milestone();
+
+    public static final String NO_ASSIGNEE_CAPTION = "<no assignee>";
+    public static final Assignee NO_ASSIGNEE = new Assignee();
 
     @Autowired
     private TicketService ticketService;
@@ -60,14 +72,19 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     private ProgressBar progressBar;
 
     @Autowired
-    private ComboBox<String> milestoneFilterField;
+    private ComboBox<Milestone> milestoneFilterField;
     @Autowired
-    private ComboBox<String> assigneeFilterField;
+    private ComboBox<Assignee> assigneeFilterField;
 
     @Autowired
     private CollectionLoader<Ticket> ticketsDl;
     @Autowired
     private CollectionContainer<Ticket> ticketsDc;
+
+    @Autowired
+    private ScreenBuilders screenBuilders;
+    @Autowired
+    private GroupTable<Ticket> ticketsTable;
 
     @Subscribe
     public void onBeforeShow(BeforeShowEvent event) {
@@ -76,26 +93,35 @@ public class TicketBrowse extends StandardLookup<Ticket> {
 
     @Subscribe
     public void onAfterShow(AfterShowEvent event) {
-        List<String> milestones = new ArrayList<>();
-        List<String> assignees = new ArrayList<>();
+        List<Milestone> milestones = dataManager.load(Milestone.class).list();
 
-        for (Ticket ticket : ticketsDc.getItems()) {
-            if (ticket.getMilestone() != null && !milestones.contains(ticket.getMilestone())) {
-                milestones.add(ticket.getMilestone());
-            }
-            if (ticket.getAssignee() != null && !assignees.contains(ticket.getAssignee())) {
-                assignees.add(ticket.getAssignee());
-            }
-        }
-        milestones.sort(null);
-        assignees.sort(null);
+        LinkedHashMap<String, Milestone> milestoneMap = new LinkedHashMap<>();
+        milestoneMap.put(NO_MILESTONE_CAPTION, NO_MILESTONE);
+        milestoneMap.putAll(milestones.stream()
+                .sorted(Comparator.comparing(Milestone::getTitle))
+                .collect(Collectors.toMap(Milestone::getTitle, Function.identity(), (m1, m2) -> m1, LinkedHashMap::new)));
 
-        milestones.add(0, NO_MILESTONE);
-        milestoneFilterField.setOptionsList(milestones);
+        milestoneFilterField.setOptionsMap(milestoneMap);
 
-        assignees.add(0, NO_ASSIGNEE);
-        assigneeFilterField.setOptionsList(assignees);
+        List<Assignee> assignees = dataManager.load(Assignee.class).list();
+
+        LinkedHashMap<String, Assignee> assigneeMap = new LinkedHashMap<>();
+        assigneeMap.put(NO_ASSIGNEE_CAPTION, NO_ASSIGNEE);
+        assigneeMap.putAll(assignees.stream()
+                .sorted(Comparator.comparing(Assignee::getLogin))
+                .collect(Collectors.toMap(Assignee::getLogin, Function.identity(), (a1, a2) -> a1, LinkedHashMap::new)));
+
+        assigneeFilterField.setOptionsMap(assigneeMap);
     }
+
+//    @Subscribe("ticketsTable.edit")
+//    public void onTicketsTableEdit(Action.ActionPerformedEvent event) {
+//        TicketEdit ticketEdit = screenBuilders.editor(ticketsTable)
+//                .withScreenClass(TicketEdit.class)
+//                .build();
+//        ticketEdit.setAssignees(assignees);
+//        ticketEdit.show();
+//    }
 
     @Subscribe("importBtn")
     public void onImportBtnClick(Button.ClickEvent event) {
@@ -112,7 +138,9 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     private void importTickets() {
         ticketService.deleteTickets();
 
-        List<Ticket> tickets = ticketService.loadTicketsFromGitHub();
+        List<Assignee> assignees = ticketService.loadAssignees();
+        List<Milestone> milestones = ticketService.loadMilestones();
+        List<Ticket> tickets = ticketService.loadIssues(assignees, milestones);
 
         ticketService.updateTicketsFromZenHub(tickets);
         notifications.create(Notifications.NotificationType.HUMANIZED).withCaption("Imported " + tickets.size() + " tickets").show();
@@ -139,8 +167,8 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     }
 
     @Subscribe("milestoneFilterField")
-    public void onMilestoneFilterFieldValueChange(HasValue.ValueChangeEvent<String> event) {
-        String value = event.getValue();
+    public void onMilestoneFilterFieldValueChange(HasValue.ValueChangeEvent<Milestone> event) {
+        Milestone value = event.getValue();
         if (NO_MILESTONE.equals(value)) {
             ticketsDl.setParameter("milestoneIsNull", true);
             ticketsDl.removeParameter("milestone");
@@ -152,8 +180,8 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     }
 
     @Subscribe("assigneeFilterField")
-    public void onAssigneeFilterFieldValueChange(HasValue.ValueChangeEvent<String> event) {
-        String value = event.getValue();
+    public void onAssigneeFilterFieldValueChange(HasValue.ValueChangeEvent<Assignee> event) {
+        Assignee value = event.getValue();
         if (NO_ASSIGNEE.equals(value)) {
             ticketsDl.setParameter("assigneeIsNull", true);
             ticketsDl.removeParameter("assignee");

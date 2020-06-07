@@ -7,9 +7,27 @@
                   class="com.haulmont.tickman.entity.Ticket">
             <fetchPlan>
                 <property name="estimate"/>
+                <property name="milestone" fetchPlan="_minimal"/>
+                <property name="assignee" fetchPlan="_minimal"/>
             </fetchPlan>
             <loader/>
         </instance>
+        <collection id="assigneesDc" class="com.haulmont.tickman.entity.Assignee">
+            <fetchPlan extends="_local"/>
+            <loader id="assigneesDl">
+                <query>
+                    <![CDATA[select e from tickman_Assignee e]]>
+                </query>
+            </loader>
+        </collection>
+        <collection id="milestonesDc" class="com.haulmont.tickman.entity.Milestone">
+            <fetchPlan extends="_local"/>
+            <loader id="milestonesDl">
+                <query>
+                    <![CDATA[select e from tickman_Milestone e]]>
+                </query>
+            </loader>
+        </collection>
     </data>
     <dialogMode forceDialog="true"
                 height="AUTO" width="AUTO"/>
@@ -17,6 +35,8 @@
         <form id="form" dataContainer="ticketDc">
             <column width="350px">
                 <comboBox id="estimateField" property="estimate"/>
+                <entityComboBox id="assigneeField" property="assignee" optionsContainer="assigneesDc"/>
+                <entityComboBox id="milestoneField" property="milestone" optionsContainer="milestonesDc"/>
             </column>
         </form>
         <hbox id="editActions" spacing="true">

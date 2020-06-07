@@ -18,6 +18,28 @@
             <column name="MEMBERS" type="varchar(500)"/>
         </createTable>
 
+        <createTable tableName="TICKMAN_ASSIGNEE">
+            <column name="LOGIN" type="varchar(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="VERSION" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TEAM_ID" type="int">
+                <constraints foreignKeyName="FK_TICKMAN_TICKET_TEAM" references="TICKMAN_TEAM(ID)"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="TICKMAN_MILESTONE">
+            <column name="NUM" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="VERSION" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TITLE" type="varchar(255)"/>
+        </createTable>
+
         <createTable tableName="TICKMAN_TICKET">
             <column name="NUM" type="int">
                 <constraints primaryKey="true" nullable="false"/>
@@ -29,14 +51,15 @@
             <column name="TITLE" type="varchar(255)"/>
             <column name="DESCRIPTION" type="clob"/>
             <column name="ESTIMATE" type="int"/>
-            <column name="ASSIGNEE" type="varchar(255)"/>
-            <column name="MILESTONE" type="varchar(255)"/>
+            <column name="ASSIGNEE_ID" type="varchar(255)">
+                <constraints foreignKeyName="FK_TICKMAN_TICKET_ASSIGNEE" references="TICKMAN_ASSIGNEE(LOGIN)"/>
+            </column>
+            <column name="MILESTONE" type="int">
+                <constraints foreignKeyName="FK_TICKMAN_TICKET_MILESTONE" references="TICKMAN_MILESTONE(NUM)"/>
+            </column>
             <column name="PIPELINE" type="varchar(255)"/>
             <column name="LABELS" type="varchar(255)"/>
             <column name="EPIC" type="boolean"/>
-            <column name="TEAM_ID" type="int">
-                <constraints foreignKeyName="FK_TICKMAN_TICKET_TEAM" references="TICKMAN_TEAM(ID)"/>
-            </column>
         </createTable>
 
     </changeSet>

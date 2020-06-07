@@ -7,6 +7,8 @@ import io.jmix.ui.component.ComboBox;
 import io.jmix.ui.screen.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
+
 @UiController("tickman_Ticket.edit")
 @UiDescriptor("ticket-edit.xml")
 @EditedEntityContainer("ticketDc")
@@ -29,6 +31,6 @@ public class TicketEdit extends StandardEditor<Ticket> {
 
     @Subscribe
     public void onBeforeCommitChanges(BeforeCommitChangesEvent event) {
-        ticketService.updateEstimate(getEditedEntity());
+        ticketService.updateTicket(getEditedEntity());
     }
 }
