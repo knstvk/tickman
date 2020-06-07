@@ -17,7 +17,16 @@
                                 <c:where>t.team = :team</c:where>
                             </c:jpql>
                             <c:jpql>
+                                <c:where>t.assignee = :assignee</c:where>
+                            </c:jpql>
+                            <c:jpql>
+                                <c:where>t.assignee is null and :assigneeIsNull = true</c:where>
+                            </c:jpql>
+                            <c:jpql>
                                 <c:where>t.milestone = :milestone</c:where>
+                            </c:jpql>
+                            <c:jpql>
+                                <c:where>t.milestone is null and :milestoneIsNull = true</c:where>
                             </c:jpql>
                             <c:jpql>
                                 <c:where>t.epic = :epic</c:where>
@@ -46,6 +55,8 @@
                     <row>
                         <label value="Team" align="MIDDLE_LEFT"/>
                         <entityComboBox id="teamFilterField" optionsContainer="teamsDc"/>
+                        <label value="Assignee" align="MIDDLE_LEFT"/>
+                        <comboBox id="assigneeFilterField"/>
                     </row>
                     <row>
                         <label value="Milestone" align="MIDDLE_LEFT"/>

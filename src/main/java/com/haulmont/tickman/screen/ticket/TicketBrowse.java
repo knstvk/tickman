@@ -22,9 +22,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @UiController("tickman_Ticket.browse")
 @UiDescriptor("ticket-browse.xml")
@@ -33,6 +32,8 @@ import java.util.stream.Collectors;
 public class TicketBrowse extends StandardLookup<Ticket> {
 
     private static final Logger log = LoggerFactory.getLogger(TicketBrowse.class);
+    public static final String NO_MILESTONE = "<no milestone>";
+    public static final String NO_ASSIGNEE = "<no assignee>";
 
     @Autowired
     private TicketService ticketService;
@@ -60,6 +61,8 @@ public class TicketBrowse extends StandardLookup<Ticket> {
 
     @Autowired
     private ComboBox<String> milestoneFilterField;
+    @Autowired
+    private ComboBox<String> assigneeFilterField;
 
     @Autowired
     private CollectionLoader<Ticket> ticketsDl;
@@ -73,15 +76,26 @@ public class TicketBrowse extends StandardLookup<Ticket> {
 
     @Subscribe
     public void onAfterShow(AfterShowEvent event) {
-        List<String> milestones = ticketsDc.getItems().stream()
-                .map(Ticket::getMilestone)
-                .filter(Objects::nonNull)
-                .distinct()
-                .sorted()
-                .collect(Collectors.toList());
-        milestoneFilterField.setOptionsList(milestones);
-    }
+        List<String> milestones = new ArrayList<>();
+        List<String> assignees = new ArrayList<>();
 
+        for (Ticket ticket : ticketsDc.getItems()) {
+            if (ticket.getMilestone() != null && !milestones.contains(ticket.getMilestone())) {
+                milestones.add(ticket.getMilestone());
+            }
+            if (ticket.getAssignee() != null && !assignees.contains(ticket.getAssignee())) {
+                assignees.add(ticket.getAssignee());
+            }
+        }
+        milestones.sort(null);
+        assignees.sort(null);
+
+        milestones.add(0, NO_MILESTONE);
+        milestoneFilterField.setOptionsList(milestones);
+
+        assignees.add(0, NO_ASSIGNEE);
+        assigneeFilterField.setOptionsList(assignees);
+    }
 
     @Subscribe("importBtn")
     public void onImportBtnClick(Button.ClickEvent event) {
@@ -126,7 +140,27 @@ public class TicketBrowse extends StandardLookup<Ticket> {
 
     @Subscribe("milestoneFilterField")
     public void onMilestoneFilterFieldValueChange(HasValue.ValueChangeEvent<String> event) {
-        ticketsDl.setParameter("milestone", event.getValue());
+        String value = event.getValue();
+        if (NO_MILESTONE.equals(value)) {
+            ticketsDl.setParameter("milestoneIsNull", true);
+            ticketsDl.removeParameter("milestone");
+        } else {
+            ticketsDl.setParameter("milestone", value);
+            ticketsDl.removeParameter("milestoneIsNull");
+        }
+        ticketsDl.load();
+    }
+
+    @Subscribe("assigneeFilterField")
+    public void onAssigneeFilterFieldValueChange(HasValue.ValueChangeEvent<String> event) {
+        String value = event.getValue();
+        if (NO_ASSIGNEE.equals(value)) {
+            ticketsDl.setParameter("assigneeIsNull", true);
+            ticketsDl.removeParameter("assignee");
+        } else {
+            ticketsDl.setParameter("assignee", value);
+            ticketsDl.removeParameter("assigneeIsNull");
+        }
         ticketsDl.load();
     }
 
