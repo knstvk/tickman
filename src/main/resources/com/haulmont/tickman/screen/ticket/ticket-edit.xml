@@ -5,8 +5,7 @@
     <data>
         <instance id="ticketDc"
                   class="com.haulmont.tickman.entity.Ticket">
-            <fetchPlan>
-                <property name="estimate"/>
+            <fetchPlan extends="_base">
                 <property name="milestone" fetchPlan="_minimal"/>
                 <property name="assignee" fetchPlan="_minimal"/>
             </fetchPlan>
@@ -32,8 +31,10 @@
     <dialogMode forceDialog="true"
                 height="AUTO" width="AUTO"/>
     <layout spacing="true" expand="editActions">
+        <label id="numLab" htmlEnabled="true" htmlSanitizerEnabled="false" align="MIDDLE_CENTER"/>
         <form id="form" dataContainer="ticketDc">
             <column width="350px">
+                <textField property="title" editable="false"/>
                 <comboBox id="estimateField" property="estimate"/>
                 <entityComboBox id="assigneeField" property="assignee" optionsContainer="assigneesDc"/>
                 <entityComboBox id="milestoneField" property="milestone" optionsContainer="milestonesDc"/>

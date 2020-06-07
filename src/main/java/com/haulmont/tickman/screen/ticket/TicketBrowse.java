@@ -11,7 +11,6 @@ import io.jmix.ui.Dialogs;
 import io.jmix.ui.Notifications;
 import io.jmix.ui.ScreenBuilders;
 import io.jmix.ui.UiComponents;
-import io.jmix.ui.action.Action;
 import io.jmix.ui.action.DialogAction;
 import io.jmix.ui.component.*;
 import io.jmix.ui.executor.BackgroundTask;
@@ -26,12 +25,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @UiController("tickman_Ticket.browse")
 @UiDescriptor("ticket-browse.xml")
@@ -93,35 +88,31 @@ public class TicketBrowse extends StandardLookup<Ticket> {
 
     @Subscribe
     public void onAfterShow(AfterShowEvent event) {
-        List<Milestone> milestones = dataManager.load(Milestone.class).list();
+        initMilestoneFilter();
+        initAssigneeFilter();
+    }
 
-        LinkedHashMap<String, Milestone> milestoneMap = new LinkedHashMap<>();
-        milestoneMap.put(NO_MILESTONE_CAPTION, NO_MILESTONE);
-        milestoneMap.putAll(milestones.stream()
-                .sorted(Comparator.comparing(Milestone::getTitle))
-                .collect(Collectors.toMap(Milestone::getTitle, Function.identity(), (m1, m2) -> m1, LinkedHashMap::new)));
-
-        milestoneFilterField.setOptionsMap(milestoneMap);
-
-        List<Assignee> assignees = dataManager.load(Assignee.class).list();
-
+    private void initAssigneeFilter() {
         LinkedHashMap<String, Assignee> assigneeMap = new LinkedHashMap<>();
         assigneeMap.put(NO_ASSIGNEE_CAPTION, NO_ASSIGNEE);
-        assigneeMap.putAll(assignees.stream()
-                .sorted(Comparator.comparing(Assignee::getLogin))
-                .collect(Collectors.toMap(Assignee::getLogin, Function.identity(), (a1, a2) -> a1, LinkedHashMap::new)));
+
+        dataManager.load(Assignee.class)
+                .list()
+                .forEach(assignee -> assigneeMap.put(assignee.getLogin(), assignee));
 
         assigneeFilterField.setOptionsMap(assigneeMap);
     }
 
-//    @Subscribe("ticketsTable.edit")
-//    public void onTicketsTableEdit(Action.ActionPerformedEvent event) {
-//        TicketEdit ticketEdit = screenBuilders.editor(ticketsTable)
-//                .withScreenClass(TicketEdit.class)
-//                .build();
-//        ticketEdit.setAssignees(assignees);
-//        ticketEdit.show();
-//    }
+    private void initMilestoneFilter() {
+        LinkedHashMap<String, Milestone> milestoneMap = new LinkedHashMap<>();
+        milestoneMap.put(NO_MILESTONE_CAPTION, NO_MILESTONE);
+
+        dataManager.load(Milestone.class)
+                .list()
+                .forEach(milestone -> milestoneMap.put(milestone.getTitle(), milestone));
+
+        milestoneFilterField.setOptionsMap(milestoneMap);
+    }
 
     @Subscribe("importBtn")
     public void onImportBtnClick(Button.ClickEvent event) {
@@ -145,6 +136,9 @@ public class TicketBrowse extends StandardLookup<Ticket> {
         ticketService.updateTicketsFromZenHub(tickets);
         notifications.create(Notifications.NotificationType.HUMANIZED).withCaption("Imported " + tickets.size() + " tickets").show();
         getScreenData().loadAll();
+
+        initAssigneeFilter();
+        initMilestoneFilter();
 
 //        progressBar.setVisible(true);
 //        BackgroundTaskHandler<Void> handler = backgroundWorker.handle(new UpdateFromZenHubTask(tickets));

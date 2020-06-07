@@ -2,15 +2,15 @@ package com.haulmont.tickman.retrofit;
 
 public class ZenHubIssue {
 
-    private ZenHubEstimateValue estimate;
+    private ZenHubEstimate estimate;
     private boolean isEpic;
     private ZenHubPipeline pipeline;
 
-    public ZenHubEstimateValue getEstimate() {
+    public ZenHubEstimate getEstimate() {
         return estimate;
     }
 
-    public void setEstimate(ZenHubEstimateValue estimate) {
+    public void setEstimate(ZenHubEstimate estimate) {
         this.estimate = estimate;
     }
 

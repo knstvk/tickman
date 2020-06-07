@@ -12,5 +12,5 @@ public interface ZenHub {
     Call<ZenHubIssue> getIssue(@Path("repoId") int repoId, @Path("issue") int issue);
 
     @PUT("/p1/repositories/{repoId}/issues/{issue}/estimate")
-    Call<ZenHubEstimate> setEstimate(@Path("repoId") int repoId, @Path("issue") int issue, @Body ZenHubEstimate estimate);
+    Call<ZenHubEstimateUpdate> setEstimate(@Path("repoId") int repoId, @Path("issue") int issue, @Body ZenHubEstimateUpdate update);
 }

@@ -276,7 +276,7 @@ public class TicketService {
 
     private Integer getEstimate(ZenHubIssue issue) {
         if (issue != null) {
-            ZenHubEstimateValue estimate = issue.getEstimate();
+            ZenHubEstimate estimate = issue.getEstimate();
             if (estimate != null) {
                 return estimate.getValue();
             }
@@ -300,15 +300,15 @@ public class TicketService {
     private void updateOnZenHub(Ticket ticket) {
         log.info("Updating ZenHub estimate " + ticket.getNum());
         ZenHub zenHub = zenhubBuilder().build().create(ZenHub.class);
-        ZenHubEstimate zenHubEstimate = new ZenHubEstimate();
-        zenHubEstimate.setEstimate(ticket.getEstimate());
-        Call<ZenHubEstimate> call = zenHub.setEstimate(properties.getRepoId(), ticket.getNum(), zenHubEstimate);
+        ZenHubEstimateUpdate update = new ZenHubEstimateUpdate();
+        update.setEstimate(ticket.getEstimate());
+        Call<ZenHubEstimateUpdate> call = zenHub.setEstimate(properties.getRepoId(), ticket.getNum(), update);
         try {
-            Response<ZenHubEstimate> response = call.execute();
+            Response<ZenHubEstimateUpdate> response = call.execute();
             if (!response.isSuccessful() || response.body() == null) {
                 throw new RuntimeException("Unsuccessful response: " + response);
             }
-            ZenHubEstimate estimate = response.body();
+            ZenHubEstimateUpdate estimate = response.body();
             if (!estimate.getEstimate().equals(ticket.getEstimate())) {
                 throw new RuntimeException("ZenHub update failed");
             }
