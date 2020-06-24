@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<window xmlns="http://jmix.io/schema/ui/window"
+        caption="msg://ticketExportScreen.caption">
+    <dialogMode forceDialog="true" height="AUTO" width="AUTO"/>
+    <layout spacing="true">
+        <radioButtonGroup id="radioGroup" orientation="horizontal"/>
+        <textArea id="textArea" height="200" width="800"/>
+    </layout>
+</window>

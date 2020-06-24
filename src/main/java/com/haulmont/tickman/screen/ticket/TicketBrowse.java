@@ -7,10 +7,13 @@ import com.haulmont.tickman.entity.Team;
 import com.haulmont.tickman.entity.Ticket;
 import com.haulmont.tickman.service.TicketService;
 import io.jmix.core.DataManager;
+import io.jmix.core.Sort;
+import io.jmix.core.metamodel.model.MetaPropertyPath;
 import io.jmix.ui.Dialogs;
 import io.jmix.ui.Notifications;
 import io.jmix.ui.ScreenBuilders;
 import io.jmix.ui.UiComponents;
+import io.jmix.ui.action.Action;
 import io.jmix.ui.action.DialogAction;
 import io.jmix.ui.component.*;
 import io.jmix.ui.executor.BackgroundTask;
@@ -27,6 +30,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @UiController("tickman_Ticket.browse")
 @UiDescriptor("ticket-browse.xml")
@@ -70,6 +75,8 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     private ComboBox<Milestone> milestoneFilterField;
     @Autowired
     private ComboBox<Assignee> assigneeFilterField;
+    @Autowired
+    private ComboBox<String> pipelineFilterField;
 
     @Autowired
     private CollectionLoader<Ticket> ticketsDl;
@@ -80,6 +87,13 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     private ScreenBuilders screenBuilders;
     @Autowired
     private GroupTable<Ticket> ticketsTable;
+    @Autowired
+    private ComboBox<Integer> estimateFilterField;
+
+    @Subscribe
+    public void onInit(InitEvent event) {
+        ticketsDc.setSorter(new TicketContainerSorter(ticketsDc, properties));
+    }
 
     @Subscribe
     public void onBeforeShow(BeforeShowEvent event) {
@@ -90,6 +104,8 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     public void onAfterShow(AfterShowEvent event) {
         initMilestoneFilter();
         initAssigneeFilter();
+        initPipelineFilter();
+        initEstimateFilter();
     }
 
     private void initAssigneeFilter() {
@@ -112,6 +128,30 @@ public class TicketBrowse extends StandardLookup<Ticket> {
                 .forEach(milestone -> milestoneMap.put(milestone.getTitle(), milestone));
 
         milestoneFilterField.setOptionsMap(milestoneMap);
+    }
+
+    private void initPipelineFilter() {
+        List<String> pipelines = ticketsDc.getItems().stream()
+                .map(Ticket::getPipeline)
+                .distinct()
+                .collect(Collectors.toList());
+        pipelineFilterField.setOptionsList(pipelines);
+    }
+
+    private void initEstimateFilter() {
+        LinkedHashMap<String, Integer> estimatesMap = new LinkedHashMap<>();
+        estimatesMap.put("<not estimated>", 0);
+
+        ticketsDc.getItems().stream()
+                .map(Ticket::getEstimate)
+                .distinct()
+                .filter(Objects::nonNull)
+                .sorted()
+                .forEach(estimate -> {
+                    estimatesMap.put(String.valueOf(estimate), estimate);
+                });
+
+        estimateFilterField.setOptionsMap(estimatesMap);
     }
 
     @Subscribe("importBtn")
@@ -139,6 +179,8 @@ public class TicketBrowse extends StandardLookup<Ticket> {
 
         initAssigneeFilter();
         initMilestoneFilter();
+        initPipelineFilter();
+        initEstimateFilter();
 
 //        progressBar.setVisible(true);
 //        BackgroundTaskHandler<Void> handler = backgroundWorker.handle(new UpdateFromZenHubTask(tickets));
@@ -186,6 +228,25 @@ public class TicketBrowse extends StandardLookup<Ticket> {
         ticketsDl.load();
     }
 
+    @Subscribe("pipelineFilterField")
+    public void onPipelineFilterFieldValueChange(HasValue.ValueChangeEvent<String> event) {
+        ticketsDl.setParameter("pipeline", event.getValue());
+        ticketsDl.load();
+    }
+
+    @Subscribe("estimateFilterField")
+    public void onEstimateFilterFieldValueChange(HasValue.ValueChangeEvent<Integer> event) {
+        Integer value = event.getValue();
+        if (value != null && value == 0) {
+            ticketsDl.setParameter("estimateIsNull", true);
+            ticketsDl.removeParameter("estimate");
+        } else {
+            ticketsDl.setParameter("estimate", value);
+            ticketsDl.removeParameter("estimateIsNull");
+        }
+        ticketsDl.load();
+    }
+
     @Subscribe("epicFilterField")
     public void onEpicFilterFieldValueChange(HasValue.ValueChangeEvent<Boolean> event) {
         if (event.getValue() == null || !event.getValue()) {
@@ -194,6 +255,23 @@ public class TicketBrowse extends StandardLookup<Ticket> {
             ticketsDl.removeParameter("epic");
         }
         ticketsDl.load();
+    }
+
+    @Subscribe(id = "ticketsDl", target = Target.DATA_LOADER)
+    public void onTicketsDlPostLoad(CollectionLoader.PostLoadEvent<Ticket> event) {
+        Table.SortInfo sortInfo = ticketsTable.getSortInfo();
+        if (sortInfo != null && ((MetaPropertyPath) sortInfo.getPropertyId()).toPathString().equals("pipeline")) {
+            ticketsDc.getSorter().sort(Sort.by(sortInfo.getAscending() ? Sort.Direction.ASC : Sort.Direction.DESC, "pipeline"));
+        }
+    }
+
+    @Subscribe("ticketsTable.export")
+    public void onTicketsTableExport(Action.ActionPerformedEvent event) {
+        TicketExportScreen screen = screenBuilders.screen(this)
+                .withScreenClass(TicketExportScreen.class)
+                .build();
+        screen.setTickets(ticketsTable.getSelected());
+        screen.show();
     }
 
     private class UpdateFromZenHubTask extends BackgroundTask<Integer, Void> {
