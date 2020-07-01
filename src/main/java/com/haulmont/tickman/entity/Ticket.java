@@ -4,6 +4,8 @@ import io.jmix.core.entity.Versioned;
 import io.jmix.core.metamodel.annotation.InstanceName;
 
 import javax.persistence.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity(name = "tickman_Ticket")
 @Table(name = "TICKMAN_TICKET")
@@ -16,6 +18,9 @@ public class Ticket implements io.jmix.core.Entity, Versioned {
     @Version
     @Column(name = "VERSION", nullable = false)
     private Integer version;
+
+    @Column(name = "CREATED_AT")
+    private LocalDate createdAt;
 
     @Column(name = "HTML_URL")
     private String htmlUrl;
@@ -47,6 +52,14 @@ public class Ticket implements io.jmix.core.Entity, Versioned {
 
     @Column(name = "EPIC")
     private Boolean epic;
+
+    public LocalDate getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDate createdAt) {
+        this.createdAt = createdAt;
+    }
 
     public void setAssignee(Assignee assignee) {
         this.assignee = assignee;

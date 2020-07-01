@@ -95,6 +95,7 @@
             </actions>
             <columns>
                 <column id="num"/>
+                <column id="createdAt"/>
                 <column id="title"/>
                 <column id="estimate">
                     <aggregation type="SUM"/>

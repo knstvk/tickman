@@ -27,6 +27,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -87,6 +90,7 @@ public class TicketService {
                 .map(issue -> {
                     Ticket ticket = dataManager.create(Ticket.class);
                     ticket.setNum(issue.getNumber());
+                    ticket.setCreatedAt(LocalDate.parse(issue.getCreatedAt(), DateTimeFormatter.ISO_OFFSET_DATE_TIME));
                     ticket.setHtmlUrl(issue.getHtmlUrl());
                     ticket.setTitle(issue.getTitle());
                     ticket.setDescription(issue.getBody());

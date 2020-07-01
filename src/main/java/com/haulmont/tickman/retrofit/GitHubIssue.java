@@ -5,6 +5,7 @@ import java.util.List;
 public class GitHubIssue {
 
     private Integer number;
+    private String createdAt;
     private String title;
     private String body;
     private String htmlUrl;
@@ -18,6 +19,14 @@ public class GitHubIssue {
 
     public void setNumber(Integer number) {
         this.number = number;
+    }
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
     }
 
     public String getTitle() {

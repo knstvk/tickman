@@ -47,6 +47,7 @@
             <column name="VERSION" type="int">
                 <constraints nullable="false"/>
             </column>
+            <column name="CREATED_AT" type="datetime"/>
             <column name="HTML_URL" type="varchar(255)"/>
             <column name="TITLE" type="varchar(255)"/>
             <column name="DESCRIPTION" type="clob"/>
