@@ -6,8 +6,8 @@
         <instance id="ticketDc"
                   class="com.haulmont.tickman.entity.Ticket">
             <fetchPlan extends="_base">
-                <property name="milestone" fetchPlan="_minimal"/>
-                <property name="assignee" fetchPlan="_minimal"/>
+                <property name="milestone" fetchPlan="_instance_name"/>
+                <property name="assignee" fetchPlan="_instance_name"/>
             </fetchPlan>
             <loader/>
         </instance>

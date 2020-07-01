@@ -1,5 +1,7 @@
 package com.haulmont.tickman.screen.ticket;
 
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.haulmont.tickman.TickmanProperties;
 import com.haulmont.tickman.entity.Assignee;
 import com.haulmont.tickman.entity.Milestone;
@@ -7,6 +9,7 @@ import com.haulmont.tickman.entity.Team;
 import com.haulmont.tickman.entity.Ticket;
 import com.haulmont.tickman.service.TicketService;
 import io.jmix.core.DataManager;
+import io.jmix.core.LoadContext;
 import io.jmix.core.Sort;
 import io.jmix.core.metamodel.model.MetaPropertyPath;
 import io.jmix.ui.Dialogs;
@@ -23,6 +26,7 @@ import io.jmix.ui.model.CollectionContainer;
 import io.jmix.ui.model.CollectionLoader;
 import io.jmix.ui.screen.LookupComponent;
 import io.jmix.ui.screen.*;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +34,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @UiController("tickman_Ticket.browse")
@@ -88,7 +91,8 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     @Autowired
     private GroupTable<Ticket> ticketsTable;
     @Autowired
-    private ComboBox<Integer> estimateFilterField;
+    private TextField<String> estimateFilterField;
+    private List<Ticket> tickets;
 
     @Subscribe
     public void onInit(InitEvent event) {
@@ -105,7 +109,6 @@ public class TicketBrowse extends StandardLookup<Ticket> {
         initMilestoneFilter();
         initAssigneeFilter();
         initPipelineFilter();
-        initEstimateFilter();
     }
 
     private void initAssigneeFilter() {
@@ -138,22 +141,6 @@ public class TicketBrowse extends StandardLookup<Ticket> {
         pipelineFilterField.setOptionsList(pipelines);
     }
 
-    private void initEstimateFilter() {
-        LinkedHashMap<String, Integer> estimatesMap = new LinkedHashMap<>();
-        estimatesMap.put("<not estimated>", 0);
-
-        ticketsDc.getItems().stream()
-                .map(Ticket::getEstimate)
-                .distinct()
-                .filter(Objects::nonNull)
-                .sorted()
-                .forEach(estimate -> {
-                    estimatesMap.put(String.valueOf(estimate), estimate);
-                });
-
-        estimateFilterField.setOptionsMap(estimatesMap);
-    }
-
     @Subscribe("importBtn")
     public void onImportBtnClick(Button.ClickEvent event) {
         dialogs.createOptionDialog()
@@ -180,7 +167,6 @@ public class TicketBrowse extends StandardLookup<Ticket> {
         initAssigneeFilter();
         initMilestoneFilter();
         initPipelineFilter();
-        initEstimateFilter();
 
 //        progressBar.setVisible(true);
 //        BackgroundTaskHandler<Void> handler = backgroundWorker.handle(new UpdateFromZenHubTask(tickets));
@@ -235,16 +221,8 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     }
 
     @Subscribe("estimateFilterField")
-    public void onEstimateFilterFieldValueChange(HasValue.ValueChangeEvent<Integer> event) {
-        Integer value = event.getValue();
-        if (value != null && value == 0) {
-            ticketsDl.setParameter("estimateIsNull", true);
-            ticketsDl.removeParameter("estimate");
-        } else {
-            ticketsDl.setParameter("estimate", value);
-            ticketsDl.removeParameter("estimateIsNull");
-        }
-        ticketsDl.load();
+    public void onEstimateFilterFieldValueChange(HasValue.ValueChangeEvent<String> event) {
+        ticketsDc.setItems(filterByEstimate(tickets));
     }
 
     @Subscribe("epicFilterField")
@@ -259,9 +237,23 @@ public class TicketBrowse extends StandardLookup<Ticket> {
 
     @Subscribe(id = "ticketsDl", target = Target.DATA_LOADER)
     public void onTicketsDlPostLoad(CollectionLoader.PostLoadEvent<Ticket> event) {
+        tickets = event.getLoadedEntities();
+        ticketsDc.setItems(filterByEstimate(tickets));
+
         Table.SortInfo sortInfo = ticketsTable.getSortInfo();
         if (sortInfo != null && ((MetaPropertyPath) sortInfo.getPropertyId()).toPathString().equals("pipeline")) {
             ticketsDc.getSorter().sort(Sort.by(sortInfo.getAscending() ? Sort.Direction.ASC : Sort.Direction.DESC, "pipeline"));
+        }
+    }
+
+    private List<Ticket> filterByEstimate(List<Ticket> tickets) {
+        String filterExpr = Strings.nullToEmpty(estimateFilterField.getValue()).trim();
+        if (filterExpr.equals("")) {
+            return tickets;
+        } else {
+            return tickets.stream()
+                    .filter(ticket -> EstimateMatcher.matches(ticket, filterExpr))
+                    .collect(Collectors.toList());
         }
     }
 

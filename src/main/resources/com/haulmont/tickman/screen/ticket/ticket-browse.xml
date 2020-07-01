@@ -8,11 +8,11 @@
         <collection id="ticketsDc"
                     class="com.haulmont.tickman.entity.Ticket">
             <fetchPlan extends="_base">
-                <property name="milestone" fetchPlan="_minimal">
+                <property name="milestone" fetchPlan="_instance_name">
                     <property name="title"/>
                 </property>
-                <property name="assignee" fetchPlan="_minimal">
-                    <property name="team" fetchPlan="_minimal"/>
+                <property name="assignee" fetchPlan="_instance_name">
+                    <property name="team" fetchPlan="_instance_name"/>
                 </property>
             </fetchPlan>
             <loader id="ticketsDl">
@@ -36,12 +36,6 @@
                             </c:jpql>
                             <c:jpql>
                                 <c:where>t.pipeline = :pipeline</c:where>
-                            </c:jpql>
-                            <c:jpql>
-                                <c:where>t.estimate = :estimate</c:where>
-                            </c:jpql>
-                            <c:jpql>
-                                <c:where>t.estimate is null and :estimateIsNull = true</c:where>
                             </c:jpql>
                             <c:jpql>
                                 <c:where>t.epic = :epic</c:where>
@@ -76,7 +70,7 @@
                         <label value="Assignee" align="MIDDLE_LEFT"/>
                         <comboBox id="assigneeFilterField"/>
                         <label value="Estimate" align="MIDDLE_LEFT"/>
-                        <comboBox id="estimateFilterField"/>
+                        <textField id="estimateFilterField" datatype="string"/>
                     </row>
                     <row>
                         <label value="Milestone" align="MIDDLE_LEFT"/>
