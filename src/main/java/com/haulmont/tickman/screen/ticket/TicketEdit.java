@@ -13,7 +13,6 @@ import java.util.List;
 @UiController("tickman_Ticket.edit")
 @UiDescriptor("ticket-edit.xml")
 @EditedEntityContainer("ticketDc")
-@LoadDataBeforeShow
 public class TicketEdit extends StandardEditor<Ticket> {
 
     @Autowired

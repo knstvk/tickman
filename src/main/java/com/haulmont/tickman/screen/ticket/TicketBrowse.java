@@ -1,6 +1,5 @@
 package com.haulmont.tickman.screen.ticket;
 
-import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.haulmont.tickman.TickmanProperties;
 import com.haulmont.tickman.entity.Assignee;
@@ -9,7 +8,6 @@ import com.haulmont.tickman.entity.Team;
 import com.haulmont.tickman.entity.Ticket;
 import com.haulmont.tickman.service.TicketService;
 import io.jmix.core.DataManager;
-import io.jmix.core.LoadContext;
 import io.jmix.core.Sort;
 import io.jmix.core.metamodel.model.MetaPropertyPath;
 import io.jmix.ui.Dialogs;
@@ -26,10 +24,10 @@ import io.jmix.ui.model.CollectionContainer;
 import io.jmix.ui.model.CollectionLoader;
 import io.jmix.ui.screen.LookupComponent;
 import io.jmix.ui.screen.*;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -39,7 +37,6 @@ import java.util.stream.Collectors;
 @UiController("tickman_Ticket.browse")
 @UiDescriptor("ticket-browse.xml")
 @LookupComponent("ticketsTable")
-@LoadDataBeforeShow
 public class TicketBrowse extends StandardLookup<Ticket> {
 
     private static final Logger log = LoggerFactory.getLogger(TicketBrowse.class);
@@ -94,9 +91,12 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     private TextField<String> estimateFilterField;
     private List<Ticket> tickets;
 
+    @Autowired
+    private ApplicationContext applicationContext;
+
     @Subscribe
     public void onInit(InitEvent event) {
-        ticketsDc.setSorter(new TicketContainerSorter(ticketsDc, properties));
+        ticketsDc.setSorter(new TicketContainerSorter(ticketsDc, properties, applicationContext));
     }
 
     @Subscribe
@@ -116,6 +116,7 @@ public class TicketBrowse extends StandardLookup<Ticket> {
         assigneeMap.put(NO_ASSIGNEE_CAPTION, NO_ASSIGNEE);
 
         dataManager.load(Assignee.class)
+                .all()
                 .list()
                 .forEach(assignee -> assigneeMap.put(assignee.getLogin(), assignee));
 
@@ -127,6 +128,7 @@ public class TicketBrowse extends StandardLookup<Ticket> {
         milestoneMap.put(NO_MILESTONE_CAPTION, NO_MILESTONE);
 
         dataManager.load(Milestone.class)
+                .all()
                 .list()
                 .forEach(milestone -> milestoneMap.put(milestone.getTitle(), milestone));
 

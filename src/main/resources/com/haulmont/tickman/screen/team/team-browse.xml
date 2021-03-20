@@ -16,6 +16,9 @@
     </data>
     <dialogMode height="600"
                 width="800"/>
+    <facets>
+        <dataLoadCoordinator auto="true"/>
+    </facets>
     <layout spacing="true" expand="teamsTable">
         <groupTable id="teamsTable"
                     width="100%"
@@ -29,7 +32,7 @@
                 <column id="name"/>
                 <column id="members"/>
             </columns>
-            <rowsCount/>
+            <simplePagination/>
             <buttonsPanel id="buttonsPanel"
                           alwaysVisible="true">
                 <button id="createBtn" action="teamsTable.create"/>

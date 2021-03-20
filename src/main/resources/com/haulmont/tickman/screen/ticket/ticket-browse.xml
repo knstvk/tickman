@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <window xmlns="http://jmix.io/schema/ui/window"
         xmlns:c="http://jmix.io/schema/ui/jpql-condition"
-        xmlns:settings="http://jmix.io/schema/ui/ui-data.xsd"
         caption="msg://ticketBrowse.caption"
         focusComponent="ticketsTable">
     <data readOnly="true">
@@ -57,7 +56,8 @@
     <dialogMode height="600"
                 width="800"/>
     <facets>
-        <settings:screenSettings auto="true"/>
+        <dataLoadCoordinator auto="true"/>
+        <screenSettings id="settingsFacet" auto="true"/>
     </facets>
     <layout spacing="true" expand="ticketsTable">
         <groupBox caption="Filter" collapsable="true">
@@ -107,7 +107,7 @@
                 <column id="labels"/>
                 <column id="epic"/>
             </columns>
-            <rowsCount/>
+            <simplePagination/>
             <buttonsPanel id="buttonsPanel"
                           alwaysVisible="true">
                 <button id="editBtn" action="ticketsTable.edit"/>

@@ -5,89 +5,9 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
-    <changeSet author="tickman" id="1.0">
+    <property name="uuid.type" dbms="oracle" value="varchar2(32)"/>
+    <property name="uuid.type" dbms="!oracle" value="uuid"/>
 
-        <createTable tableName="TICKMAN_TEAM">
-            <column name="ID" type="int">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="VERSION" type="int">
-                <constraints nullable="false"/>
-            </column>
-            <column name="NAME" type="varchar(255)"/>
-            <column name="MEMBERS" type="varchar(500)"/>
-        </createTable>
-
-        <createTable tableName="TICKMAN_ASSIGNEE">
-            <column name="LOGIN" type="varchar(255)">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="VERSION" type="int">
-                <constraints nullable="false"/>
-            </column>
-            <column name="TEAM_ID" type="int">
-                <constraints foreignKeyName="FK_TICKMAN_TICKET_TEAM" references="TICKMAN_TEAM(ID)"/>
-            </column>
-        </createTable>
-
-        <createTable tableName="TICKMAN_MILESTONE">
-            <column name="NUM" type="int">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="VERSION" type="int">
-                <constraints nullable="false"/>
-            </column>
-            <column name="TITLE" type="varchar(255)"/>
-        </createTable>
-
-        <createTable tableName="TICKMAN_TICKET">
-            <column name="NUM" type="int">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="VERSION" type="int">
-                <constraints nullable="false"/>
-            </column>
-            <column name="CREATED_AT" type="datetime"/>
-            <column name="HTML_URL" type="varchar(255)"/>
-            <column name="TITLE" type="varchar(255)"/>
-            <column name="DESCRIPTION" type="clob"/>
-            <column name="ESTIMATE" type="int"/>
-            <column name="ASSIGNEE_ID" type="varchar(255)">
-                <constraints foreignKeyName="FK_TICKMAN_TICKET_ASSIGNEE" references="TICKMAN_ASSIGNEE(LOGIN)"/>
-            </column>
-            <column name="MILESTONE" type="int">
-                <constraints foreignKeyName="FK_TICKMAN_TICKET_MILESTONE" references="TICKMAN_MILESTONE(NUM)"/>
-            </column>
-            <column name="PIPELINE" type="varchar(255)"/>
-            <column name="LABELS" type="varchar(255)"/>
-            <column name="EPIC" type="boolean"/>
-        </createTable>
-
-    </changeSet>
-
-    <changeSet id="1.1" author="tickman">
-
-        <insert tableName="TICKMAN_TEAM">
-            <column name="ID" value="1"/>
-            <column name="VERSION" value="1"/>
-            <column name="NAME" value="1.Frontend"/>
-            <column name="MEMBERS" value="t1-cuba,Flaurite,GlebDurygin,glebfox,web-devel"/>
-        </insert>
-
-        <insert tableName="TICKMAN_TEAM">
-            <column name="ID" value="2"/>
-            <column name="VERSION" value="1"/>
-            <column name="NAME" value="2.Backend"/>
-            <column name="MEMBERS" value="t2-cuba,knstvk,andreysubbotin,gorbunkov,soraksh,dtaimanov"/>
-        </insert>
-
-        <insert tableName="TICKMAN_TEAM">
-            <column name="ID" value="3"/>
-            <column name="VERSION" value="1"/>
-            <column name="NAME" value="3.Components"/>
-            <column name="MEMBERS" value="t3-cuba,glebshalyganov,zaharchenko-evgeny"/>
-        </insert>
-
-    </changeSet>
+    <includeAll path="/com/haulmont/tickman/liquibase/changelog"/>
 
 </databaseChangeLog>

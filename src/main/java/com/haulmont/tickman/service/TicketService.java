@@ -199,7 +199,7 @@ public class TicketService {
             }
         }
 
-        List<Team> teams = dataManager.load(Team.class).list();
+        List<Team> teams = dataManager.load(Team.class).all().list();
 
         return githubAssignees.stream()
                 .map(gitHubAssignee -> {

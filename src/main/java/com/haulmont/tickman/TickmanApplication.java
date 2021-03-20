@@ -1,10 +1,8 @@
 package com.haulmont.tickman;
 
+import io.jmix.core.security.CoreSecurityConfiguration;
+import io.jmix.core.security.InMemoryUserRepository;
 import io.jmix.core.security.UserRepository;
-import io.jmix.core.security.impl.CoreUser;
-import io.jmix.core.security.impl.InMemoryUserRepository;
-import io.jmix.security.role.assignment.RoleAssignment;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
@@ -14,15 +12,15 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.User;
 
 import javax.sql.DataSource;
+import java.util.Collections;
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
 public class TickmanApplication implements ApplicationRunner {
-
-	@Autowired
-	private UserRepository userRepository;
 
 	public static void main(String[] args) {
 		SpringApplication.run(TickmanApplication.class, args);
@@ -30,7 +28,6 @@ public class TickmanApplication implements ApplicationRunner {
 
 	@Override
 	public void run(ApplicationArguments args) throws Exception {
-		initUsers();
 	}
 
 	@Bean
@@ -40,10 +37,18 @@ public class TickmanApplication implements ApplicationRunner {
 		return DataSourceBuilder.create().build();
 	}
 
-	private void initUsers() {
-		CoreUser admin = new CoreUser("admin", "{noop}admin", "Admin");
-		if (userRepository instanceof InMemoryUserRepository) {
-			((InMemoryUserRepository) userRepository).createUser(admin);
+	@EnableWebSecurity
+	static class SecurityConfiguration extends CoreSecurityConfiguration {
+
+		@Override
+		public UserRepository userRepository() {
+			InMemoryUserRepository repository = new InMemoryUserRepository();
+			repository.addUser(User.builder()
+					.username("admin")
+					.password("{noop}admin")
+					.authorities(Collections.emptyList())
+					.build());
+			return repository;
 		}
 	}
 }

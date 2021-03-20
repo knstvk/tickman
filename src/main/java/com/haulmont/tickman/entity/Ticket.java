@@ -1,15 +1,15 @@
 package com.haulmont.tickman.entity;
 
-import io.jmix.core.entity.Versioned;
 import io.jmix.core.metamodel.annotation.InstanceName;
+import io.jmix.core.metamodel.annotation.JmixEntity;
 
 import javax.persistence.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
+@JmixEntity
 @Entity(name = "tickman_Ticket")
 @Table(name = "TICKMAN_TICKET")
-public class Ticket implements io.jmix.core.Entity, Versioned {
+public class Ticket {
 
     @Id
     @Column(name = "NUM", nullable = false)
@@ -85,12 +85,10 @@ public class Ticket implements io.jmix.core.Entity, Versioned {
         this.pipeline = pipeline;
     }
 
-    @Override
     public Integer getVersion() {
         return version;
     }
 
-    @Override
     public void setVersion(Integer version) {
         this.version = version;
     }

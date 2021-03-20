@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @UiController("tickman_MainScreen")
 @UiDescriptor("tickman-main-screen.xml")
-@LoadDataBeforeShow
 public class TickmanMainScreen extends Screen implements Window.HasWorkArea {
 
     @Autowired

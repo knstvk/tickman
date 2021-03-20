@@ -6,9 +6,7 @@ import io.jmix.core.security.ClientDetails;
 import io.jmix.core.security.SecurityContextHelper;
 import io.jmix.ui.Notifications;
 import io.jmix.ui.ScreenBuilders;
-import io.jmix.ui.UiProperties;
 import io.jmix.ui.action.Action;
-import io.jmix.ui.component.ComboBox;
 import io.jmix.ui.component.PasswordField;
 import io.jmix.ui.component.TextField;
 import io.jmix.ui.navigation.Route;
@@ -17,9 +15,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 
+import javax.annotation.Nullable;
 import java.util.Locale;
 
 @UiController("tickman_LoginScreen")
@@ -34,22 +34,13 @@ public class TickmanLoginScreen extends Screen {
     private PasswordField passwordField;
 
     @Autowired
-    private ComboBox<Locale> localesField;
-
-    @Autowired
     private Notifications notifications;
 
     @Autowired
     private Messages messages;
 
     @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private CoreProperties coreProperties;
-
-    @Autowired
-    private UiProperties uiProperties;
+    protected AuthenticationManager authenticationManager;
 
     @Autowired
     private ScreenBuilders screenBuilders;
@@ -57,13 +48,7 @@ public class TickmanLoginScreen extends Screen {
     @Subscribe
     private void onInit(InitEvent event) {
         usernameField.focus();
-        initLocalesField();
         initDefaultCredentials();
-    }
-
-    private void initLocalesField() {
-        localesField.setOptionsMap(coreProperties.getAvailableLocales());
-        localesField.setValue(coreProperties.getAvailableLocales().values().iterator().next());
     }
 
     private void initDefaultCredentials() {
@@ -88,25 +73,36 @@ public class TickmanLoginScreen extends Screen {
         }
 
         try {
-            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
-            ClientDetails clientDetails = ClientDetails.builder()
-                    .locale(localesField.getValue())
-                    .build();
-            authenticationToken.setDetails(clientDetails);
+            Authentication authenticationToken = createAuthenticationToken(username, password);
             Authentication authentication = authenticationManager.authenticate(authenticationToken);
             SecurityContextHelper.setAuthentication(authentication);
-
-            String mainScreenId = uiProperties.getMainScreenId();
-            screenBuilders.screen(this)
-                    .withScreenId(mainScreenId)
-                    .withOpenMode(OpenMode.ROOT)
-                    .build()
-                    .show();
-        } catch (BadCredentialsException e) {
+            showMainScreen();
+        } catch (BadCredentialsException | DisabledException e) {
             notifications.create(Notifications.NotificationType.ERROR)
                     .withCaption(messages.getMessage(getClass(), "loginFailed"))
                     .withDescription(e.getMessage())
                     .show();
         }
+    }
+
+    protected Authentication createAuthenticationToken(String username, String password) {
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(username, password);
+
+        ClientDetails clientDetails = ClientDetails.builder()
+                .locale(Locale.ENGLISH)
+                .build();
+
+        authenticationToken.setDetails(clientDetails);
+
+        return authenticationToken;
+    }
+
+    protected void showMainScreen() {
+        screenBuilders.screen(this)
+                .withScreenId("tickman_MainScreen")
+                .withOpenMode(OpenMode.ROOT)
+                .build()
+                .show();
     }
 }

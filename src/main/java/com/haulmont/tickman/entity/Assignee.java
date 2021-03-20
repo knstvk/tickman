@@ -1,13 +1,14 @@
 package com.haulmont.tickman.entity;
 
-import io.jmix.core.entity.Versioned;
 import io.jmix.core.metamodel.annotation.InstanceName;
+import io.jmix.core.metamodel.annotation.JmixEntity;
 
 import javax.persistence.*;
 
+@JmixEntity
 @Table(name = "TICKMAN_ASSIGNEE")
 @Entity(name = "tickman_Assignee")
-public class Assignee implements io.jmix.core.Entity, Versioned {
+public class Assignee {
 
     @Id
     @Column(name = "LOGIN", nullable = false)
@@ -38,12 +39,10 @@ public class Assignee implements io.jmix.core.Entity, Versioned {
         this.login = login;
     }
 
-    @Override
     public Integer getVersion() {
         return version;
     }
 
-    @Override
     public void setVersion(Integer version) {
         this.version = version;
     }

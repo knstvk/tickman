@@ -1,13 +1,14 @@
 package com.haulmont.tickman.entity;
 
-import io.jmix.core.entity.Versioned;
 import io.jmix.core.metamodel.annotation.InstanceName;
+import io.jmix.core.metamodel.annotation.JmixEntity;
 
 import javax.persistence.*;
 
+@JmixEntity
 @Table(name = "TICKMAN_MILESTONE")
 @Entity(name = "tickman_Milestone")
-public class Milestone implements io.jmix.core.Entity, Versioned {
+public class Milestone {
 
     @Id
     @Column(name = "NUM", nullable = false)
@@ -37,12 +38,10 @@ public class Milestone implements io.jmix.core.Entity, Versioned {
         this.number = number;
     }
 
-    @Override
     public Integer getVersion() {
         return version;
     }
 
-    @Override
     public void setVersion(Integer version) {
         this.version = version;
     }

@@ -1,18 +1,21 @@
 package com.haulmont.tickman.entity;
 
-import io.jmix.core.entity.Versioned;
+import io.jmix.core.entity.annotation.JmixGeneratedValue;
 import io.jmix.core.metamodel.annotation.InstanceName;
-import io.jmix.data.entity.BaseIntegerIdEntity;
+import io.jmix.core.metamodel.annotation.JmixEntity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Version;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
+@JmixEntity
 @Table(name = "TICKMAN_TEAM")
 @Entity(name = "tickman_Team")
-public class Team extends BaseIntegerIdEntity implements Versioned {
+public class Team {
+
+    @Id
+    @JmixGeneratedValue
+    @Column(name = "ID", nullable = false)
+    private Integer id;
 
     @Version
     @Column(name = "VERSION", nullable = false)
@@ -25,6 +28,14 @@ public class Team extends BaseIntegerIdEntity implements Versioned {
 
     @Column(name = "MEMBERS")
     private String members;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
     public String getMembers() {
         return members;
@@ -42,12 +53,10 @@ public class Team extends BaseIntegerIdEntity implements Versioned {
         this.name = name;
     }
 
-    @Override
     public Integer getVersion() {
         return version;
     }
 
-    @Override
     public void setVersion(Integer version) {
         this.version = version;
     }

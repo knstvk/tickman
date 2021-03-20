@@ -30,6 +30,9 @@
     </data>
     <dialogMode forceDialog="true"
                 height="AUTO" width="AUTO"/>
+    <facets>
+        <dataLoadCoordinator auto="true"/>
+    </facets>
     <layout spacing="true" expand="editActions">
         <label id="numLab" htmlEnabled="true" htmlSanitizerEnabled="false" align="MIDDLE_CENTER"/>
         <form id="form" dataContainer="ticketDc">
