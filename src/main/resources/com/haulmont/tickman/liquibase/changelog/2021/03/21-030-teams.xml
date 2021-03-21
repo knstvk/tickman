@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd"
+        objectQuotingStrategy="QUOTE_ONLY_RESERVED_WORDS">
+    <changeSet id="1" author="tickman">
+
+        <insert tableName="TICKMAN_TEAM">
+            <column name="ID" value="5ecda9cc-33fb-4a31-b628-9dbb13537b7c"/>
+            <column name="VERSION" value="1"/>
+            <column name="NAME" value="Backend"/>
+            <column name="MEMBERS" value="andreysubbotin,dtaimanov,plakhov,soraksh,knstvk"/>
+        </insert>
+
+        <insert tableName="TICKMAN_TEAM">
+            <column name="ID" value="a3553f66-89f0-4b6f-bb55-acf0db230210"/>
+            <column name="VERSION" value="1"/>
+            <column name="NAME" value="UI"/>
+            <column name="MEMBERS" value="glebfox,Flaurite,GlebDurygin"/>
+        </insert>
+
+        <insert tableName="TICKMAN_TEAM">
+            <column name="ID" value="b1b4c409-00c7-452b-8f77-c9757f9d92db"/>
+            <column name="VERSION" value="1"/>
+            <column name="NAME" value="Add-ons"/>
+            <column name="MEMBERS" value="gorbunkov,glebshalyganov,NikitaShchienko,artemy63,Gavrilov-Ivan,m-orlova"/>
+        </insert>
+
+        <insert tableName="TICKMAN_TEAM">
+            <column name="ID" value="5eae925e-774d-4eb4-9236-ef9864583f30"/>
+            <column name="VERSION" value="1"/>
+            <column name="NAME" value="Cloud"/>
+            <column name="MEMBERS" value="AndreiDenisenko,Al-xandr1,KartonDCP"/>
+        </insert>
+
+        <insert tableName="TICKMAN_TEAM">
+            <column name="ID" value="069fd8f9-2e2d-4559-a819-951d04e1b2a7"/>
+            <column name="VERSION" value="1"/>
+            <column name="NAME" value="Frontend"/>
+            <column name="MEMBERS" value="web-devel,vadimbasko,vyacheslav-pushkin,abarinovhaulmont,HegelPro,karandashovrz"/>
+        </insert>
+
+    </changeSet>
+
+</databaseChangeLog>

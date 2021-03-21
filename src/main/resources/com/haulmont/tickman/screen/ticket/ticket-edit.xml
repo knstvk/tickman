@@ -9,7 +9,7 @@
                 <property name="milestone" fetchPlan="_instance_name"/>
                 <property name="assignee" fetchPlan="_instance_name"/>
             </fetchPlan>
-            <loader/>
+            <loader id="ticketDl"/>
         </instance>
         <collection id="assigneesDc" class="com.haulmont.tickman.entity.Assignee">
             <fetchPlan extends="_local"/>
@@ -23,7 +23,7 @@
             <fetchPlan extends="_local"/>
             <loader id="milestonesDl">
                 <query>
-                    <![CDATA[select e from tickman_Milestone e]]>
+                    <![CDATA[select e from tickman_Milestone e where e.repository = :repository]]>
                 </query>
             </loader>
         </collection>
@@ -31,7 +31,10 @@
     <dialogMode forceDialog="true"
                 height="AUTO" width="AUTO"/>
     <facets>
-        <dataLoadCoordinator auto="true"/>
+        <dataLoadCoordinator>
+            <refresh loader="ticketDl" onScreenEvent="BeforeShow"/>
+            <refresh loader="assigneesDl" onScreenEvent="BeforeShow"/>
+        </dataLoadCoordinator>
     </facets>
     <layout spacing="true" expand="editActions">
         <label id="numLab" htmlEnabled="true" htmlSanitizerEnabled="false" align="MIDDLE_CENTER"/>

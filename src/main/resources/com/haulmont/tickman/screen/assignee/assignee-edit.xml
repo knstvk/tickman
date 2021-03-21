@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<window xmlns="http://jmix.io/schema/ui/window"
+        caption="msg://assigneeEdit.caption"
+        focusComponent="form">
+    <data>
+        <instance id="assigneeDc"
+                  class="com.haulmont.tickman.entity.Assignee">
+            <fetchPlan extends="_base">
+                <property name="team" fetchPlan="_base"/>
+            </fetchPlan>
+            <loader/>
+        </instance>
+        <collection id="teamsDc" class="com.haulmont.tickman.entity.Team">
+            <fetchPlan extends="_base"/>
+            <loader id="teamsDl">
+                <query>
+                    <![CDATA[select e from tickman_Team e]]>
+                </query>
+            </loader>
+        </collection>
+    </data>
+    <facets>
+        <dataLoadCoordinator auto="true"/>
+        <screenSettings id="settingsFacet" auto="true"/>
+    </facets>
+    <actions>
+        <action id="windowCommitAndClose" caption="msg:///actions.Ok"
+                icon="EDITOR_OK"
+                primary="true"
+                shortcut="${COMMIT_SHORTCUT}"/>
+        <action id="windowClose"
+                caption="msg:///actions.Close"
+                icon="EDITOR_CANCEL"/>
+    </actions>
+    <dialogMode height="AUTO"
+                forceDialog="true" width="AUTO"/>
+    <layout spacing="true" expand="editActions">
+        <form id="form" dataContainer="assigneeDc">
+            <column width="350px">
+                <textField id="loginField" property="login" editable="false"/>
+                <entityComboBox id="teamField" property="team" optionsContainer="teamsDc">
+                    <actions>
+                        <action id="clear" type="entity_clear"/>
+                    </actions>
+                </entityComboBox>
+            </column>
+        </form>
+        <hbox id="editActions" spacing="true">
+            <button id="commitAndCloseBtn" action="windowCommitAndClose"/>
+            <button id="closeBtn" action="windowClose"/>
+        </hbox>
+    </layout>
+</window>

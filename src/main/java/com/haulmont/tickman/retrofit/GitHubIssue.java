@@ -11,6 +11,7 @@ public class GitHubIssue {
     private String htmlUrl;
     private List<GitHubLabel> labels;
     private GitHubAssignee assignee;
+    private List<GitHubAssignee> assignees;
     private GitHubMilestone milestone;
 
     public Integer getNumber() {
@@ -67,6 +68,14 @@ public class GitHubIssue {
 
     public void setAssignee(GitHubAssignee assignee) {
         this.assignee = assignee;
+    }
+
+    public List<GitHubAssignee> getAssignees() {
+        return assignees;
+    }
+
+    public void setAssignees(List<GitHubAssignee> assignees) {
+        this.assignees = assignees;
     }
 
     public GitHubMilestone getMilestone() {

@@ -27,7 +27,7 @@
                                 <c:where>t.assignee is null and :assigneeIsNull = true</c:where>
                             </c:jpql>
                             <c:jpql>
-                                <c:where>t.milestone = :milestone</c:where>
+                                <c:where>t.milestone.title = :milestone</c:where>
                             </c:jpql>
                             <c:jpql>
                                 <c:where>t.milestone is null and :milestoneIsNull = true</c:where>
@@ -100,14 +100,15 @@
                 <column id="estimate">
                     <aggregation type="SUM"/>
                 </column>
-                <column id="milestone"/>
+                <column id="milestone.title" caption="msg://com.haulmont.tickman.entity/Milestone"/>
                 <column id="assignee"/>
                 <column id="assignee.team"/>
                 <column id="pipeline"/>
                 <column id="labels"/>
                 <column id="epic"/>
             </columns>
-            <simplePagination/>
+            <simplePagination itemsPerPageVisible="true" itemsPerPageDefaultValue="500"
+                              nullItemsPerPageOptionVisible="false"/>
             <buttonsPanel id="buttonsPanel"
                           alwaysVisible="true">
                 <button id="editBtn" action="ticketsTable.edit"/>

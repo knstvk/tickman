@@ -1,9 +1,12 @@
 package com.haulmont.tickman.entity;
 
+import io.jmix.core.entity.annotation.JmixGeneratedValue;
 import io.jmix.core.metamodel.annotation.InstanceName;
 import io.jmix.core.metamodel.annotation.JmixEntity;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import java.util.UUID;
 
 @JmixEntity
 @Table(name = "TICKMAN_MILESTONE")
@@ -11,6 +14,10 @@ import javax.persistence.*;
 public class Milestone {
 
     @Id
+    @Column(name = "ID", nullable = false)
+    @JmixGeneratedValue
+    private UUID id;
+
     @Column(name = "NUM", nullable = false)
     private Integer number;
 
@@ -21,6 +28,27 @@ public class Milestone {
     @Column(name = "TITLE")
     @InstanceName
     private String title;
+
+    @NotNull
+    @JoinColumn(name = "REPOSITORY_ID", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    private Repository repository;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public Repository getRepository() {
+        return repository;
+    }
+
+    public void setRepository(Repository repository) {
+        this.repository = repository;
+    }
 
     public String getTitle() {
         return title;

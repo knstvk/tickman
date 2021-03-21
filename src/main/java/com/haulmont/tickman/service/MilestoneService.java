@@ -5,7 +5,6 @@ import com.haulmont.tickman.entity.Repository;
 import com.haulmont.tickman.retrofit.GitHub;
 import com.haulmont.tickman.retrofit.GitHubMilestone;
 import io.jmix.core.DataManager;
-import io.jmix.core.querycondition.PropertyCondition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,17 +58,11 @@ public class MilestoneService {
         }
 
         return githubMilestones.stream()
-                .filter(gitHubMilestone -> {
-                    return !dataManager.load(Milestone.class)
-                            .condition(PropertyCondition.equal("title", gitHubMilestone.getTitle()))
-                            .optional()
-                            .isPresent();
-
-                })
                 .map(gitHubMilestone -> {
                     Milestone milestone = dataManager.create(Milestone.class);
                     milestone.setNumber(gitHubMilestone.getNumber());
                     milestone.setTitle(gitHubMilestone.getTitle());
+                    milestone.setRepository(repository);
                     return dataManager.save(milestone);
                 })
                 .collect(Collectors.toList());

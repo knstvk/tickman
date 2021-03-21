@@ -18,13 +18,19 @@
     </changeSet>
     <changeSet id="2" author="tickman">
         <createTable tableName="TICKMAN_MILESTONE">
-            <column name="NUM" type="INT">
+            <column name="ID" type="UUID">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="PK_TICKMAN_MILESTONE"/>
+            </column>
+            <column name="NUM" type="INT">
+                <constraints nullable="false"/>
             </column>
             <column name="VERSION" type="INT">
                 <constraints nullable="false"/>
             </column>
             <column name="TITLE" type="VARCHAR(255)"/>
+            <column name="REPOSITORY_ID" type="INT">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
     </changeSet>
     <changeSet id="3" author="tickman">
@@ -76,7 +82,7 @@
             <column name="TITLE" type="VARCHAR(255)"/>
             <column name="DESCRIPTION" type="CLOB"/>
             <column name="ESTIMATE" type="INT"/>
-            <column name="MILESTONE_ID" type="INT"/>
+            <column name="MILESTONE_ID" type="UUID"/>
             <column name="ASSIGNEE_ID" type="VARCHAR(255)"/>
             <column name="PIPELINE" type="VARCHAR(255)"/>
             <column name="LABELS" type="VARCHAR(255)"/>
@@ -88,23 +94,28 @@
                              tableName="TICKMAN_TICKET"/>
     </changeSet>
     <changeSet id="7" author="tickman">
+        <addForeignKeyConstraint baseColumnNames="REPOSITORY_ID" baseTableName="TICKMAN_MILESTONE"
+                                 constraintName="FK_TICKMANMILEST_ON_REPOSITORY" referencedColumnNames="ID"
+                                 referencedTableName="TICKMAN_REPOSITORY"/>
+    </changeSet>
+    <changeSet id="8" author="tickman">
         <addForeignKeyConstraint baseColumnNames="REPOSITORY_ID" baseTableName="TICKMAN_TICKET"
                                  constraintName="FK_TICKMANTICKET_ON_REPOSITORY" referencedColumnNames="ID"
                                  referencedTableName="TICKMAN_REPOSITORY"/>
     </changeSet>
-    <changeSet id="8" author="tickman">
+    <changeSet id="9" author="tickman">
         <addForeignKeyConstraint baseColumnNames="TEAM_ID" baseTableName="TICKMAN_ASSIGNEE"
                                  constraintName="FK_TICKMAN_ASSIGNEE_ON_TEAM" referencedColumnNames="ID"
                                  referencedTableName="TICKMAN_TEAM"/>
     </changeSet>
-    <changeSet id="9" author="tickman">
+    <changeSet id="10" author="tickman">
         <addForeignKeyConstraint baseColumnNames="ASSIGNEE_ID" baseTableName="TICKMAN_TICKET"
                                  constraintName="FK_TICKMAN_TICKET_ON_ASSIGNEE" referencedColumnNames="LOGIN"
                                  referencedTableName="TICKMAN_ASSIGNEE"/>
     </changeSet>
-    <changeSet id="10" author="tickman">
+    <changeSet id="11" author="tickman">
         <addForeignKeyConstraint baseColumnNames="MILESTONE_ID" baseTableName="TICKMAN_TICKET"
-                                 constraintName="FK_TICKMAN_TICKET_ON_MILESTONE" referencedColumnNames="NUM"
+                                 constraintName="FK_TICKMAN_TICKET_ON_MILESTONE" referencedColumnNames="ID"
                                  referencedTableName="TICKMAN_MILESTONE"/>
     </changeSet>
 </databaseChangeLog>

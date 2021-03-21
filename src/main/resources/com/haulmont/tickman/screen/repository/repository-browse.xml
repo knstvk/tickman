@@ -40,9 +40,9 @@
                         <action id="remove" type="remove"/>
                     </actions>
                     <columns>
+                        <column id="id"/>
                         <column id="orgName"/>
                         <column id="repoName"/>
-                        <column id="zenHubRepoId"/>
                     </columns>
                     <simplePagination/>
                     <buttonsPanel id="buttonsPanel"
@@ -62,9 +62,9 @@
                 <scrollBox id="fieldGroupBox">
                     <form id="form" dataContainer="repositoryDc">
                         <column width="350px">
+                            <textField id="idField" property="id"/>
                             <textField id="organizationField" property="orgName"/>
                             <textField id="repositoryField" property="repoName"/>
-                            <textField id="repoIdField" property="zenHubRepoId"/>
                         </column>
                     </form>
                 </scrollBox>

@@ -47,7 +47,7 @@ public class TicketService {
         entityManager.createQuery("delete from tickman_Assignee a").executeUpdate();
     }
 
-    public List<Ticket> loadIssues(Repository repository, List<Assignee> assignees, List<Milestone> milestones) {
+    public List<Ticket> loadIssues(Repository repository, List<Milestone> milestones, List<Team> teams) {
         List<GitHubIssue> githubIssues = new ArrayList<>();
 
         GitHub gitHub = retrofitBuilders.githubBuilder().build().create(GitHub.class);
@@ -85,8 +85,8 @@ public class TicketService {
                     ticket.setHtmlUrl(issue.getHtmlUrl());
                     ticket.setTitle(issue.getTitle());
                     ticket.setDescription(issue.getBody());
-                    ticket.setMilestone(getMilestone(issue, milestones));
-                    ticket.setAssignee(getAssignee(issue, assignees));
+                    ticket.setMilestone(getMilestone(issue, repository, milestones));
+                    ticket.setAssignee(getAssignee(issue, teams));
 
                     String labels = null;
                     List<GitHubLabel> labelList = issue.getLabels();
@@ -101,25 +101,44 @@ public class TicketService {
     }
 
     @Nullable
-    private Milestone getMilestone(GitHubIssue issue, List<Milestone> milestones) {
+    private Milestone getMilestone(GitHubIssue issue, Repository repository, List<Milestone> milestones) {
         if (issue.getMilestone() == null) {
             return null;
         }
         return milestones.stream()
-                .filter(milestone -> milestone.getNumber().equals(issue.getMilestone().getNumber()))
+                .filter(milestone ->
+                        milestone.getRepository().equals(repository)
+                                && milestone.getNumber().equals(issue.getMilestone().getNumber())
+                )
                 .findAny()
                 .orElse(null);
     }
 
     @Nullable
-    private Assignee getAssignee(GitHubIssue issue, List<Assignee> assignees) {
-        if (issue.getAssignee() == null) {
+    private Assignee getAssignee(GitHubIssue issue,  List<Team> teams) {
+        GitHubAssignee gitHubAssignee = getGitHubAssignee(issue);
+        if (gitHubAssignee == null) {
             return null;
         }
-        return assignees.stream()
-                .filter(assignee -> assignee.getLogin().equals(issue.getAssignee().getLogin()))
-                .findAny()
-                .orElse(null);
+        return dataManager.load(Assignee.class)
+                .id(gitHubAssignee.getLogin())
+                .optional()
+                .orElseGet(() -> {
+                    Assignee assignee = dataManager.create(Assignee.class);
+                    assignee.setLogin(gitHubAssignee.getLogin());
+                    assignee.setTeam(selectTeam(teams, gitHubAssignee.getLogin()));
+                    return dataManager.save(assignee);
+                });
+    }
+
+    private GitHubAssignee getGitHubAssignee(GitHubIssue issue) {
+        if (issue.getAssignee() != null) {
+            return issue.getAssignee();
+        }
+        if (!issue.getAssignees().isEmpty()) {
+            return issue.getAssignees().get(0);
+        }
+        return null;
     }
 
     @Nullable
@@ -130,12 +149,12 @@ public class TicketService {
                 .orElse(null);
     }
 
-    public List<Ticket> updateTicketsFromZenHub(Repository repository, List<Ticket> tickets) {
+    public List<Ticket> updateTicketsFromZenHub(List<Ticket> tickets) {
         List<Ticket> resultList = new ArrayList<>();
         ZenHub zenHub = retrofitBuilders.zenhubBuilder().build().create(ZenHub.class);
 
         for (Ticket ticket : tickets) {
-            long resetSec = loadZenHubInfo(repository, zenHub, ticket);
+            long resetSec = loadZenHubInfo(zenHub, ticket);
             resultList.add(dataManager.save(ticket));
             long waitSec = resetSec - Instant.now().getEpochSecond();
             if (waitSec >= 0) {
@@ -150,12 +169,12 @@ public class TicketService {
         return resultList;
     }
 
-    public long loadZenHubInfo(Repository repository, @Nullable ZenHub zenHub, Ticket ticket) {
-        log.info("Loading ZenHub issue {}#{}", repository.getName(), ticket.getNum());
+    public long loadZenHubInfo(@Nullable ZenHub zenHub, Ticket ticket) {
+        log.info("Loading ZenHub issue {}", ticket.getName());
         if (zenHub == null) {
             zenHub = retrofitBuilders.zenhubBuilder().build().create(ZenHub.class);
         }
-        Call<ZenHubIssue> issueCall = zenHub.getIssue(repository.getId(), ticket.getNum());
+        Call<ZenHubIssue> issueCall = zenHub.getIssue(ticket.getRepository().getId(), ticket.getNum());
         try {
             Response<ZenHubIssue> response = issueCall.execute();
             if (!response.isSuccessful() || response.body() == null) {

@@ -3,7 +3,6 @@ package com.haulmont.tickman.screen.ticket;
 import com.google.common.base.Strings;
 import com.haulmont.tickman.TickmanProperties;
 import com.haulmont.tickman.entity.*;
-import com.haulmont.tickman.service.AssigneeService;
 import com.haulmont.tickman.service.MilestoneService;
 import com.haulmont.tickman.service.TicketService;
 import io.jmix.core.DataManager;
@@ -17,6 +16,7 @@ import io.jmix.ui.action.Action;
 import io.jmix.ui.action.DialogAction;
 import io.jmix.ui.component.*;
 import io.jmix.ui.executor.BackgroundTask;
+import io.jmix.ui.executor.BackgroundTaskHandler;
 import io.jmix.ui.executor.BackgroundWorker;
 import io.jmix.ui.executor.TaskLifeCycle;
 import io.jmix.ui.model.CollectionContainer;
@@ -72,7 +72,7 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     private ProgressBar progressBar;
 
     @Autowired
-    private ComboBox<Milestone> milestoneFilterField;
+    private ComboBox<String> milestoneFilterField;
     @Autowired
     private ComboBox<Assignee> assigneeFilterField;
     @Autowired
@@ -89,14 +89,11 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     private GroupTable<Ticket> ticketsTable;
     @Autowired
     private TextField<String> estimateFilterField;
-    private List<Ticket> tickets;
+
+    private List<Ticket> loadedTickets;
 
     @Autowired
     private ApplicationContext applicationContext;
-
-    @Autowired
-    private AssigneeService assigneeService;
-
     @Autowired
     private MilestoneService milestoneService;
 
@@ -130,15 +127,20 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     }
 
     private void initMilestoneFilter() {
-        LinkedHashMap<String, Milestone> milestoneMap = new LinkedHashMap<>();
-        milestoneMap.put(NO_MILESTONE_CAPTION, NO_MILESTONE);
+        List<String> milestones = new ArrayList<>();
+        milestones.add(NO_MILESTONE_CAPTION);
+        milestones.addAll(
+                dataManager.load(Milestone.class)
+                        .all()
+                        .sort(Sort.by("title"))
+                        .list()
+                        .stream()
+                        .map(Milestone::getTitle)
+                        .distinct()
+                        .collect(Collectors.toList())
+        );
 
-        dataManager.load(Milestone.class)
-                .all()
-                .list()
-                .forEach(milestone -> milestoneMap.put(milestone.getTitle(), milestone));
-
-        milestoneFilterField.setOptionsMap(milestoneMap);
+        milestoneFilterField.setOptionsList(milestones);
     }
 
     private void initPipelineFilter() {
@@ -169,16 +171,17 @@ public class TicketBrowse extends StandardLookup<Ticket> {
                 .sort(Sort.by("orgName", "repoName"))
                 .list();
 
+        List<Team> teams = dataManager.load(Team.class).all().list();
+
         List<Ticket> importedTickets = new ArrayList<>();
 
         for (Repository repository : repositories) {
-            List<Assignee> assignees = assigneeService.loadAssignees(repository);
             List<Milestone> milestones = milestoneService.loadMilestones(repository);
-            List<Ticket> tickets = ticketService.loadIssues(repository, assignees, milestones);
-            ticketService.updateTicketsFromZenHub(repository, tickets);
-
+            List<Ticket> tickets = ticketService.loadIssues(repository, milestones, teams);
             importedTickets.addAll(tickets);
         }
+
+        ticketService.updateTicketsFromZenHub(importedTickets);
 
         notifications.create(Notifications.NotificationType.HUMANIZED).withCaption("Imported " + importedTickets.size() + " tickets").show();
         getScreenData().loadAll();
@@ -186,10 +189,21 @@ public class TicketBrowse extends StandardLookup<Ticket> {
         initAssigneeFilter();
         initMilestoneFilter();
         initPipelineFilter();
+    }
 
-//        progressBar.setVisible(true);
-//        BackgroundTaskHandler<Void> handler = backgroundWorker.handle(new UpdateFromZenHubTask(tickets));
-//        handler.execute();
+    private void importTicketsAsync() {
+        ticketService.deleteTickets();
+
+        List<Repository> repositories = dataManager.load(Repository.class)
+                .all()
+                .sort(Sort.by("orgName", "repoName"))
+                .list();
+
+        progressBar.setVisible(true);
+        progressBar.setCaption("Loading issues from GitHub repositories");
+
+        BackgroundTaskHandler<List<Ticket>> handler = backgroundWorker.handle(new LoadTicketsTask(repositories));
+        handler.execute();
     }
 
     @Install(to = "ticketsTable.num", subject = "columnGenerator")
@@ -208,9 +222,9 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     }
 
     @Subscribe("milestoneFilterField")
-    public void onMilestoneFilterFieldValueChange(HasValue.ValueChangeEvent<Milestone> event) {
-        Milestone value = event.getValue();
-        if (NO_MILESTONE.equals(value)) {
+    public void onMilestoneFilterFieldValueChange(HasValue.ValueChangeEvent<String> event) {
+        String value = event.getValue();
+        if (NO_MILESTONE_CAPTION.equals(value)) {
             ticketsDl.setParameter("milestoneIsNull", true);
             ticketsDl.removeParameter("milestone");
         } else {
@@ -241,7 +255,7 @@ public class TicketBrowse extends StandardLookup<Ticket> {
 
     @Subscribe("estimateFilterField")
     public void onEstimateFilterFieldValueChange(HasValue.ValueChangeEvent<String> event) {
-        ticketsDc.setItems(filterByEstimate(tickets));
+        ticketsDc.setItems(filterByEstimate(loadedTickets));
     }
 
     @Subscribe("epicFilterField")
@@ -256,8 +270,8 @@ public class TicketBrowse extends StandardLookup<Ticket> {
 
     @Subscribe(id = "ticketsDl", target = Target.DATA_LOADER)
     public void onTicketsDlPostLoad(CollectionLoader.PostLoadEvent<Ticket> event) {
-        tickets = event.getLoadedEntities();
-        ticketsDc.setItems(filterByEstimate(tickets));
+        loadedTickets = event.getLoadedEntities();
+        ticketsDc.setItems(filterByEstimate(loadedTickets));
 
         Table.SortInfo sortInfo = ticketsTable.getSortInfo();
         if (sortInfo != null && ((MetaPropertyPath) sortInfo.getPropertyId()).toPathString().equals("pipeline")) {
@@ -285,41 +299,85 @@ public class TicketBrowse extends StandardLookup<Ticket> {
         screen.show();
     }
 
-//    private class UpdateFromZenHubTask extends BackgroundTask<Integer, Void> {
-//
-//        private List<Ticket> tickets;
-//
-//        protected UpdateFromZenHubTask(List<Ticket> tickets) {
-//            super(600, TicketBrowse.this);
-//            this.tickets = tickets;
-//        }
-//
-//        @Override
-//        public Void run(TaskLifeCycle<Integer> taskLifeCycle) throws Exception {
-//            int i = 0;
-//            for (Ticket ticket : tickets) {
-//                long resetSec = ticketService.loadZenHubInfo(repository, null, ticket);
-//                dataManager.save(ticket);
-//                long waitSec = resetSec - Instant.now().getEpochSecond();
-//                if (waitSec >= 0) {
-//                    log.info("Sleeping for " + (waitSec + 1) + " sec to satisfy ZenHub rate limit");
-//                    Thread.sleep((waitSec + 1) * 1000);
-//                }
-//                taskLifeCycle.publish(++i);
-//            }
-//            return null;
-//        }
-//
-//        @Override
-//        public void done(Void result) {
-//            notifications.create(Notifications.NotificationType.HUMANIZED).withCaption("Updated " + tickets.size() + " tickets from ZenHub").show();
-//            getScreenData().loadAll();
-//            progressBar.setVisible(false);
-//        }
-//
-//        @Override
-//        public void progress(List<Integer> changes) {
-//            progressBar.setValue(Double.valueOf(changes.get(changes.size() - 1)));
-//        }
-//    }
+
+    private class LoadTicketsTask extends BackgroundTask<Integer, List<Ticket>> {
+
+        private List<Repository> repositories;
+
+        protected LoadTicketsTask(List<Repository> repositories) {
+            super(600, TicketBrowse.this);
+            this.repositories = repositories;
+        }
+
+        @Override
+        public List<Ticket> run(TaskLifeCycle<Integer> taskLifeCycle) throws Exception {
+            List<Ticket> importedTickets = new ArrayList<>();
+
+            List<Team> teams = dataManager.load(Team.class).all().list();
+
+            for (int i = 0; i < repositories.size(); i++) {
+                Repository repository = repositories.get(i);
+                List<Milestone> milestones = milestoneService.loadMilestones(repository);
+                List<Ticket> tickets = ticketService.loadIssues(repository, milestones, teams);
+
+                importedTickets.addAll(tickets);
+                taskLifeCycle.publish(i + 1);
+            }
+            return importedTickets;
+        }
+
+        @Override
+        public void done(List<Ticket> result) {
+            progressBar.setCaption("Updating issues from ZenHub");
+            BackgroundTaskHandler<Void> updateHandler = backgroundWorker.handle(new UpdateFromZenHubTask(result));
+            updateHandler.execute();
+        }
+
+        @Override
+        public void progress(List<Integer> changes) {
+            progressBar.setValue(((double) changes.get(changes.size() - 1) / (double) repositories.size()));
+        }
+    }
+
+    private class UpdateFromZenHubTask extends BackgroundTask<Integer, Void> {
+
+        private List<Ticket> tickets;
+
+        protected UpdateFromZenHubTask(List<Ticket> tickets) {
+            super(600, TicketBrowse.this);
+            this.tickets = tickets;
+        }
+
+        @Override
+        public Void run(TaskLifeCycle<Integer> taskLifeCycle) throws Exception {
+            int i = 0;
+            for (Ticket ticket : tickets) {
+                long resetSec = ticketService.loadZenHubInfo(null, ticket);
+                dataManager.save(ticket);
+                long waitSec = resetSec - Instant.now().getEpochSecond();
+                if (waitSec >= 0) {
+                    log.info("Sleeping for " + (waitSec + 1) + " sec to satisfy ZenHub rate limit");
+                    Thread.sleep((waitSec + 1) * 1000);
+                }
+                taskLifeCycle.publish(++i);
+            }
+            return null;
+        }
+
+        @Override
+        public void done(Void result) {
+            notifications.create(Notifications.NotificationType.HUMANIZED).withCaption("Updated " + tickets.size() + " tickets from ZenHub").show();
+            getScreenData().loadAll();
+            progressBar.setVisible(false);
+
+            initAssigneeFilter();
+            initMilestoneFilter();
+            initPipelineFilter();
+        }
+
+        @Override
+        public void progress(List<Integer> changes) {
+            progressBar.setValue(((double) changes.get(changes.size() - 1) / (double) tickets.size()));
+        }
+    }
 }

@@ -21,6 +21,167 @@
             <column name="REPO_NAME" value="jmix-data"/>
         </insert>
 
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="285305190"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-audit"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="285325190"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-cuba"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="285314557"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-datatools"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="285317838"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-dynattr"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="285275989"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-gradle-plugin"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="285320111"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-localfs"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="172435360"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-old"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="285322418"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-rest"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="285312084"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-security"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="285527350"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-sessions"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="285476009"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-templates"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="285297716"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-ui"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="291940754"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-reports"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="331549180"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-awsfs"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="294325829"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-bpm"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="342163483"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-dashboards"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="294338052"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-email"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="321360250"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-emailtemplates"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="321359637"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-grapesjs"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="312496469"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-imap"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="294324339"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-maps"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="294321775"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-search"/>
+        </insert>
+
+        <insert tableName="TICKMAN_REPOSITORY">
+            <column name="ID" value="294363628"/>
+            <column name="VERSION" value="1"/>
+            <column name="ORG_NAME" value="haulmont"/>
+            <column name="REPO_NAME" value="jmix-webdav"/>
+        </insert>
+
     </changeSet>
 
 </databaseChangeLog>
