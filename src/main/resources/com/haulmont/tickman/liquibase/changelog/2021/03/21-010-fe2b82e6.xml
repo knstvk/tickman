@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd"
         objectQuotingStrategy="QUOTE_ONLY_RESERVED_WORDS">
-    <changeSet id="1" author="app">
+    <changeSet id="1" author="tickman">
         <createTable tableName="TICKMAN_ASSIGNEE">
             <column name="LOGIN" type="VARCHAR(255)">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="PK_TICKMAN_ASSIGNEE"/>
@@ -13,10 +13,10 @@
             <column name="VERSION" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column name="TEAM_ID" type="INT"/>
+            <column name="TEAM_ID" type="UUID"/>
         </createTable>
     </changeSet>
-    <changeSet id="2" author="app">
+    <changeSet id="2" author="tickman">
         <createTable tableName="TICKMAN_MILESTONE">
             <column name="NUM" type="INT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="PK_TICKMAN_MILESTONE"/>
@@ -27,9 +27,25 @@
             <column name="TITLE" type="VARCHAR(255)"/>
         </createTable>
     </changeSet>
-    <changeSet id="3" author="app">
-        <createTable tableName="TICKMAN_TEAM">
+    <changeSet id="3" author="tickman">
+        <createTable tableName="TICKMAN_REPOSITORY">
             <column name="ID" type="INT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_TICKMAN_REPOSITORY"/>
+            </column>
+            <column name="VERSION" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ORG_NAME" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="REPO_NAME" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="4" author="tickman">
+        <createTable tableName="TICKMAN_TEAM">
+            <column name="ID" type="UUID">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="PK_TICKMAN_TEAM"/>
             </column>
             <column name="VERSION" type="INT">
@@ -41,10 +57,16 @@
             <column name="MEMBERS" type="VARCHAR(255)"/>
         </createTable>
     </changeSet>
-    <changeSet id="4" author="app">
+    <changeSet id="5" author="tickman">
         <createTable tableName="TICKMAN_TICKET">
-            <column name="NUM" type="INT">
+            <column name="ID" type="UUID">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="PK_TICKMAN_TICKET"/>
+            </column>
+            <column name="REPOSITORY_ID" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="NUM" type="INT">
+                <constraints nullable="false"/>
             </column>
             <column name="VERSION" type="INT">
                 <constraints nullable="false"/>
@@ -61,17 +83,26 @@
             <column name="EPIC" type="BOOLEAN"/>
         </createTable>
     </changeSet>
-    <changeSet id="5" author="app">
+    <changeSet id="6" author="tickman">
+        <addUniqueConstraint columnNames="REPOSITORY_ID, NUM" constraintName="IDX_TICKMAN_TICKET_UNQ"
+                             tableName="TICKMAN_TICKET"/>
+    </changeSet>
+    <changeSet id="7" author="tickman">
+        <addForeignKeyConstraint baseColumnNames="REPOSITORY_ID" baseTableName="TICKMAN_TICKET"
+                                 constraintName="FK_TICKMANTICKET_ON_REPOSITORY" referencedColumnNames="ID"
+                                 referencedTableName="TICKMAN_REPOSITORY"/>
+    </changeSet>
+    <changeSet id="8" author="tickman">
         <addForeignKeyConstraint baseColumnNames="TEAM_ID" baseTableName="TICKMAN_ASSIGNEE"
                                  constraintName="FK_TICKMAN_ASSIGNEE_ON_TEAM" referencedColumnNames="ID"
                                  referencedTableName="TICKMAN_TEAM"/>
     </changeSet>
-    <changeSet id="6" author="app">
+    <changeSet id="9" author="tickman">
         <addForeignKeyConstraint baseColumnNames="ASSIGNEE_ID" baseTableName="TICKMAN_TICKET"
                                  constraintName="FK_TICKMAN_TICKET_ON_ASSIGNEE" referencedColumnNames="LOGIN"
                                  referencedTableName="TICKMAN_ASSIGNEE"/>
     </changeSet>
-    <changeSet id="7" author="app">
+    <changeSet id="10" author="tickman">
         <addForeignKeyConstraint baseColumnNames="MILESTONE_ID" baseTableName="TICKMAN_TICKET"
                                  constraintName="FK_TICKMAN_TICKET_ON_MILESTONE" referencedColumnNames="NUM"
                                  referencedTableName="TICKMAN_MILESTONE"/>

@@ -1,17 +1,9 @@
 package com.haulmont.tickman.service;
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.GsonBuilder;
-import com.haulmont.tickman.TickmanProperties;
-import com.haulmont.tickman.entity.Assignee;
-import com.haulmont.tickman.entity.Milestone;
-import com.haulmont.tickman.entity.Team;
-import com.haulmont.tickman.entity.Ticket;
+import com.haulmont.tickman.entity.*;
 import com.haulmont.tickman.retrofit.*;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import retrofit2.Call;
 import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 import javax.annotation.Nullable;
 import javax.persistence.EntityManager;
@@ -28,7 +18,6 @@ import javax.persistence.PersistenceContext;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,30 +31,31 @@ public class TicketService {
     private static final Logger log = LoggerFactory.getLogger(TicketService.class);
 
     @Autowired
-    private TickmanProperties properties;
-
-    @Autowired
     private DataManager dataManager;
 
     @PersistenceContext
     private EntityManager entityManager;
 
+    @Autowired
+    private RetrofitBuilders retrofitBuilders;
+
     @Transactional
     public void deleteTickets() {
+        log.info("Removing all tickets, mlestones and assignees");
         entityManager.createQuery("delete from tickman_Ticket t").executeUpdate();
         entityManager.createQuery("delete from tickman_Milestone m").executeUpdate();
         entityManager.createQuery("delete from tickman_Assignee a").executeUpdate();
     }
 
-    public List<Ticket> loadIssues(List<Assignee> assignees, List<Milestone> milestones) {
+    public List<Ticket> loadIssues(Repository repository, List<Assignee> assignees, List<Milestone> milestones) {
         List<GitHubIssue> githubIssues = new ArrayList<>();
 
-        GitHub gitHub = githubBuilder().build().create(GitHub.class);
+        GitHub gitHub = retrofitBuilders.githubBuilder().build().create(GitHub.class);
 
         int page = 1;
         while (true) {
-            log.info("Loading GitHub issues, page " + page);
-            Call<List<GitHubIssue>> issuesCall = gitHub.loadIssues(properties.getOrganization(), properties.getRepo(), "open", page);
+            log.info("Loading GitHub issues from {}, page {}", repository.getName(), page);
+            Call<List<GitHubIssue>> issuesCall = gitHub.loadIssues(repository.getOrgName(), repository.getRepoName(), "open", page);
             try {
                 Response<List<GitHubIssue>> response = issuesCall.execute();
                 if (!response.isSuccessful()) {
@@ -89,6 +79,7 @@ public class TicketService {
         return githubIssues.stream()
                 .map(issue -> {
                     Ticket ticket = dataManager.create(Ticket.class);
+                    ticket.setRepository(repository);
                     ticket.setNum(issue.getNumber());
                     ticket.setCreatedAt(LocalDate.parse(issue.getCreatedAt(), DateTimeFormatter.ISO_OFFSET_DATE_TIME));
                     ticket.setHtmlUrl(issue.getHtmlUrl());
@@ -131,90 +122,6 @@ public class TicketService {
                 .orElse(null);
     }
 
-    public List<Milestone> loadMilestones() {
-        List<GitHubMilestone> githubMilestones = new ArrayList<>();
-
-        GitHub gitHub = githubBuilder().build().create(GitHub.class);
-
-        int page = 1;
-        while (true) {
-            log.info("Loading GitHub milestones, page " + page);
-            Call<List<GitHubMilestone>> call = gitHub.loadMilestones(properties.getOrganization(), properties.getRepo(), page);
-            try {
-                Response<List<GitHubMilestone>> response = call.execute();
-                if (!response.isSuccessful()) {
-                    throw new RuntimeException("Unsuccessful response: " + response);
-                }
-                if (response.body() != null) {
-                    githubMilestones.addAll(response.body());
-
-                    String link = response.headers().get("Link");
-                    if (link != null && link.contains("rel=\"next\"")) {
-                        page++;
-                    } else {
-                        break;
-                    }
-                }
-            } catch (IOException e) {
-                throw new RuntimeException("Error accessing " + call.request().url(), e);
-            }
-        }
-
-        return githubMilestones.stream()
-                .map(gitHubMilestone -> {
-                    Milestone milestone = dataManager.create(Milestone.class);
-                    milestone.setNumber(gitHubMilestone.getNumber());
-                    milestone.setTitle(gitHubMilestone.getTitle());
-                    return dataManager.save(milestone);
-                })
-                .collect(Collectors.toList());
-    }
-
-    public List<Assignee> loadAssignees() {
-        List<GitHubAssignee> githubAssignees = new ArrayList<>();
-
-        GitHub gitHub = githubBuilder().build().create(GitHub.class);
-
-        int page = 1;
-        while (true) {
-            log.info("Loading GitHub assignees, page " + page);
-            Call<List<GitHubAssignee>> call = gitHub.loadAssignees(properties.getOrganization(), properties.getRepo(), page);
-            try {
-                Response<List<GitHubAssignee>> response = call.execute();
-                if (!response.isSuccessful()) {
-                    throw new RuntimeException("Unsuccessful response: " + response);
-                }
-                if (response.body() != null) {
-                    githubAssignees.addAll(response.body());
-
-                    String link = response.headers().get("Link");
-                    if (link != null && link.contains("rel=\"next\"")) {
-                        page++;
-                    } else {
-                        break;
-                    }
-                }
-            } catch (IOException e) {
-                throw new RuntimeException("Error accessing " + call.request().url(), e);
-            }
-        }
-
-        List<Team> teams = dataManager.load(Team.class).all().list();
-
-        return githubAssignees.stream()
-                .map(gitHubAssignee -> {
-                    Team team = teams.stream()
-                            .filter(t -> t.getMembers().contains(gitHubAssignee.getLogin()))
-                            .findAny()
-                            .orElse(null);
-                    Assignee assignee = dataManager.create(Assignee.class);
-                    assignee.setLogin(gitHubAssignee.getLogin());
-                    assignee.setTeam(team);
-                    return dataManager.save(assignee);
-                })
-                .collect(Collectors.toList());
-    }
-
     @Nullable
     private Team selectTeam(List<Team> teams, String assignee) {
         return teams.stream()
@@ -223,12 +130,12 @@ public class TicketService {
                 .orElse(null);
     }
 
-    public List<Ticket> updateTicketsFromZenHub(List<Ticket> tickets) {
+    public List<Ticket> updateTicketsFromZenHub(Repository repository, List<Ticket> tickets) {
         List<Ticket> resultList = new ArrayList<>();
-        ZenHub zenHub = zenhubBuilder().build().create(ZenHub.class);
+        ZenHub zenHub = retrofitBuilders.zenhubBuilder().build().create(ZenHub.class);
 
         for (Ticket ticket : tickets) {
-            long resetSec = loadZenHubInfo(zenHub, ticket);
+            long resetSec = loadZenHubInfo(repository, zenHub, ticket);
             resultList.add(dataManager.save(ticket));
             long waitSec = resetSec - Instant.now().getEpochSecond();
             if (waitSec >= 0) {
@@ -243,12 +150,12 @@ public class TicketService {
         return resultList;
     }
 
-    public long loadZenHubInfo(@Nullable ZenHub zenHub, Ticket ticket) {
-        log.info("Loading ZenHub issue " + ticket.getNum());
+    public long loadZenHubInfo(Repository repository, @Nullable ZenHub zenHub, Ticket ticket) {
+        log.info("Loading ZenHub issue {}#{}", repository.getName(), ticket.getNum());
         if (zenHub == null) {
-            zenHub = zenhubBuilder().build().create(ZenHub.class);
+            zenHub = retrofitBuilders.zenhubBuilder().build().create(ZenHub.class);
         }
-        Call<ZenHubIssue> issueCall = zenHub.getIssue(properties.getRepoId(), ticket.getNum());
+        Call<ZenHubIssue> issueCall = zenHub.getIssue(repository.getId(), ticket.getNum());
         try {
             Response<ZenHubIssue> response = issueCall.execute();
             if (!response.isSuccessful() || response.body() == null) {
@@ -289,7 +196,7 @@ public class TicketService {
     }
 
     public void updateTicket(Ticket ticket) {
-        Ticket oldTicket = dataManager.load(Id.of(ticket)).fetchPlan(fp -> fp.addAll("estimate", "assignee", "milestone")).one();
+        Ticket oldTicket = dataManager.load(Id.of(ticket)).one();
 
         if (!Objects.equals(oldTicket.getEstimate(), ticket.getEstimate())) {
             updateOnZenHub(ticket);
@@ -302,11 +209,11 @@ public class TicketService {
     }
 
     private void updateOnZenHub(Ticket ticket) {
-        log.info("Updating ZenHub estimate " + ticket.getNum());
-        ZenHub zenHub = zenhubBuilder().build().create(ZenHub.class);
+        log.info("Updating ZenHub estimate " + ticket.getName());
+        ZenHub zenHub = retrofitBuilders.zenhubBuilder().build().create(ZenHub.class);
         ZenHubEstimateUpdate update = new ZenHubEstimateUpdate();
         update.setEstimate(ticket.getEstimate());
-        Call<ZenHubEstimateUpdate> call = zenHub.setEstimate(properties.getRepoId(), ticket.getNum(), update);
+        Call<ZenHubEstimateUpdate> call = zenHub.setEstimate(ticket.getRepository().getId(), ticket.getNum(), update);
         try {
             Response<ZenHubEstimateUpdate> response = call.execute();
             if (!response.isSuccessful() || response.body() == null) {
@@ -322,12 +229,12 @@ public class TicketService {
     }
 
     private void updateOnGitHub(Ticket ticket) {
-        log.info("Updating GitHub issue " + ticket.getNum());
-        GitHub gitHub = githubBuilder().build().create(GitHub.class);
+        log.info("Updating GitHub issue " + ticket.getName());
+        GitHub gitHub = retrofitBuilders.githubBuilder().build().create(GitHub.class);
         GitHubIssueUpdate update = new GitHubIssueUpdate();
         update.setAssignees(Collections.singletonList(ticket.getAssignee().getLogin()));
         update.setMilestone(ticket.getMilestone().getNumber());
-        Call<GitHubIssue> call = gitHub.updateIssue(properties.getOrganization(), properties.getRepo(), ticket.getNum(), update);
+        Call<GitHubIssue> call = gitHub.updateIssue(ticket.getRepository().getOrgName(), ticket.getRepository().getRepoName(), ticket.getNum(), update);
         try {
             Response<GitHubIssue> response = call.execute();
             if (!response.isSuccessful() || response.body() == null) {
@@ -338,39 +245,4 @@ public class TicketService {
             throw new RuntimeException("Error accessing " + call.request().url(), e);
         }
     }
-
-    private Retrofit.Builder githubBuilder() {
-        OkHttpClient okHttpClient = new OkHttpClient().newBuilder().addInterceptor(chain -> {
-            Request newRequest = chain.request().newBuilder()
-                    .header("Authorization", "token " + properties.getGitHubToken())
-                    .build();
-            return chain.proceed(newRequest);
-        }).build();
-
-        return new Retrofit.Builder()
-                .baseUrl("https://api.github.com/")
-                .client(okHttpClient)
-                .addConverterFactory(GsonConverterFactory.create(
-                        new GsonBuilder()
-                                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-                                .create()));
-    }
-
-    private Retrofit.Builder zenhubBuilder() {
-        OkHttpClient okHttpClient = new OkHttpClient().newBuilder().addInterceptor(chain -> {
-            Request newRequest = chain.request().newBuilder()
-                    .header("X-Authentication-Token", properties.getZenHubToken())
-                    .build();
-            return chain.proceed(newRequest);
-        }).build();
-
-        return new Retrofit.Builder()
-                .baseUrl("https://api.zenhub.com/")
-                .client(okHttpClient)
-                .addConverterFactory(GsonConverterFactory.create(
-                        new GsonBuilder()
-                                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-                                .create()));
-    }
-
 }

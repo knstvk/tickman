@@ -2,10 +2,9 @@ package com.haulmont.tickman.screen.ticket;
 
 import com.google.common.base.Strings;
 import com.haulmont.tickman.TickmanProperties;
-import com.haulmont.tickman.entity.Assignee;
-import com.haulmont.tickman.entity.Milestone;
-import com.haulmont.tickman.entity.Team;
-import com.haulmont.tickman.entity.Ticket;
+import com.haulmont.tickman.entity.*;
+import com.haulmont.tickman.service.AssigneeService;
+import com.haulmont.tickman.service.MilestoneService;
 import com.haulmont.tickman.service.TicketService;
 import io.jmix.core.DataManager;
 import io.jmix.core.Sort;
@@ -30,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -93,6 +93,12 @@ public class TicketBrowse extends StandardLookup<Ticket> {
 
     @Autowired
     private ApplicationContext applicationContext;
+
+    @Autowired
+    private AssigneeService assigneeService;
+
+    @Autowired
+    private MilestoneService milestoneService;
 
     @Subscribe
     public void onInit(InitEvent event) {
@@ -158,12 +164,23 @@ public class TicketBrowse extends StandardLookup<Ticket> {
     private void importTickets() {
         ticketService.deleteTickets();
 
-        List<Assignee> assignees = ticketService.loadAssignees();
-        List<Milestone> milestones = ticketService.loadMilestones();
-        List<Ticket> tickets = ticketService.loadIssues(assignees, milestones);
+        List<Repository> repositories = dataManager.load(Repository.class)
+                .all()
+                .sort(Sort.by("orgName", "repoName"))
+                .list();
 
-        ticketService.updateTicketsFromZenHub(tickets);
-        notifications.create(Notifications.NotificationType.HUMANIZED).withCaption("Imported " + tickets.size() + " tickets").show();
+        List<Ticket> importedTickets = new ArrayList<>();
+
+        for (Repository repository : repositories) {
+            List<Assignee> assignees = assigneeService.loadAssignees(repository);
+            List<Milestone> milestones = milestoneService.loadMilestones(repository);
+            List<Ticket> tickets = ticketService.loadIssues(repository, assignees, milestones);
+            ticketService.updateTicketsFromZenHub(repository, tickets);
+
+            importedTickets.addAll(tickets);
+        }
+
+        notifications.create(Notifications.NotificationType.HUMANIZED).withCaption("Imported " + importedTickets.size() + " tickets").show();
         getScreenData().loadAll();
 
         initAssigneeFilter();
@@ -268,41 +285,41 @@ public class TicketBrowse extends StandardLookup<Ticket> {
         screen.show();
     }
 
-    private class UpdateFromZenHubTask extends BackgroundTask<Integer, Void> {
-
-        private List<Ticket> tickets;
-
-        protected UpdateFromZenHubTask(List<Ticket> tickets) {
-            super(600, TicketBrowse.this);
-            this.tickets = tickets;
-        }
-
-        @Override
-        public Void run(TaskLifeCycle<Integer> taskLifeCycle) throws Exception {
-            int i = 0;
-            for (Ticket ticket : tickets) {
-                long resetSec = ticketService.loadZenHubInfo(null, ticket);
-                dataManager.save(ticket);
-                long waitSec = resetSec - Instant.now().getEpochSecond();
-                if (waitSec >= 0) {
-                    log.info("Sleeping for " + (waitSec + 1) + " sec to satisfy ZenHub rate limit");
-                    Thread.sleep((waitSec + 1) * 1000);
-                }
-                taskLifeCycle.publish(++i);
-            }
-            return null;
-        }
-
-        @Override
-        public void done(Void result) {
-            notifications.create(Notifications.NotificationType.HUMANIZED).withCaption("Updated " + tickets.size() + " tickets from ZenHub").show();
-            getScreenData().loadAll();
-            progressBar.setVisible(false);
-        }
-
-        @Override
-        public void progress(List<Integer> changes) {
-            progressBar.setValue(Double.valueOf(changes.get(changes.size() - 1)));
-        }
-    }
+//    private class UpdateFromZenHubTask extends BackgroundTask<Integer, Void> {
+//
+//        private List<Ticket> tickets;
+//
+//        protected UpdateFromZenHubTask(List<Ticket> tickets) {
+//            super(600, TicketBrowse.this);
+//            this.tickets = tickets;
+//        }
+//
+//        @Override
+//        public Void run(TaskLifeCycle<Integer> taskLifeCycle) throws Exception {
+//            int i = 0;
+//            for (Ticket ticket : tickets) {
+//                long resetSec = ticketService.loadZenHubInfo(repository, null, ticket);
+//                dataManager.save(ticket);
+//                long waitSec = resetSec - Instant.now().getEpochSecond();
+//                if (waitSec >= 0) {
+//                    log.info("Sleeping for " + (waitSec + 1) + " sec to satisfy ZenHub rate limit");
+//                    Thread.sleep((waitSec + 1) * 1000);
+//                }
+//                taskLifeCycle.publish(++i);
+//            }
+//            return null;
+//        }
+//
+//        @Override
+//        public void done(Void result) {
+//            notifications.create(Notifications.NotificationType.HUMANIZED).withCaption("Updated " + tickets.size() + " tickets from ZenHub").show();
+//            getScreenData().loadAll();
+//            progressBar.setVisible(false);
+//        }
+//
+//        @Override
+//        public void progress(List<Integer> changes) {
+//            progressBar.setValue(Double.valueOf(changes.get(changes.size() - 1)));
+//        }
+//    }
 }

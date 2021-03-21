@@ -7,12 +7,11 @@
         <collection id="ticketsDc"
                     class="com.haulmont.tickman.entity.Ticket">
             <fetchPlan extends="_base">
-                <property name="milestone" fetchPlan="_instance_name">
-                    <property name="title"/>
+                <property fetchPlan="_instance_name" name="milestone"/>
+                <property fetchPlan="_instance_name" name="assignee">
+                    <property fetchPlan="_instance_name" name="team"/>
                 </property>
-                <property name="assignee" fetchPlan="_instance_name">
-                    <property name="team" fetchPlan="_instance_name"/>
-                </property>
+                <property name="repository" fetchPlan="_instance_name"/>
             </fetchPlan>
             <loader id="ticketsDl">
                 <query>select t from tickman_Ticket t order by t.num desc
@@ -94,6 +93,7 @@
                 <action id="export" caption="Export"/>
             </actions>
             <columns>
+                <column id="repository"/>
                 <column id="num"/>
                 <column id="createdAt"/>
                 <column id="title"/>

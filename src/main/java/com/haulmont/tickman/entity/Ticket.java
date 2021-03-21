@@ -1,17 +1,32 @@
 package com.haulmont.tickman.entity;
 
+import io.jmix.core.entity.annotation.JmixGeneratedValue;
+import io.jmix.core.metamodel.annotation.DependsOnProperties;
 import io.jmix.core.metamodel.annotation.InstanceName;
 import io.jmix.core.metamodel.annotation.JmixEntity;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @JmixEntity
 @Entity(name = "tickman_Ticket")
-@Table(name = "TICKMAN_TICKET")
+@Table(name = "TICKMAN_TICKET", uniqueConstraints = {
+        @UniqueConstraint(name = "IDX_TICKMAN_TICKET_UNQ", columnNames = {"REPOSITORY_ID", "NUM"})
+})
 public class Ticket {
 
+    @JmixGeneratedValue
     @Id
+    @Column(name = "ID", nullable = false)
+    private UUID id;
+
+    @JoinColumn(name = "REPOSITORY_ID", nullable = false)
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    private Repository repository;
+
     @Column(name = "NUM", nullable = false)
     private Integer num;
 
@@ -26,7 +41,6 @@ public class Ticket {
     private String htmlUrl;
 
     @Column(name = "TITLE")
-    @InstanceName
     private String title;
 
     @Lob
@@ -52,6 +66,28 @@ public class Ticket {
 
     @Column(name = "EPIC")
     private Boolean epic;
+
+    @InstanceName
+    @DependsOnProperties({"repository", "num"})
+    public String getName() {
+        return repository == null ? String.valueOf(num) : repository.getName() + "#" + num;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public Repository getRepository() {
+        return repository;
+    }
+
+    public void setRepository(Repository repository) {
+        this.repository = repository;
+    }
 
     public LocalDate getCreatedAt() {
         return createdAt;

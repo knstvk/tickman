@@ -6,6 +6,7 @@ import io.jmix.core.metamodel.annotation.JmixEntity;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.UUID;
 
 @JmixEntity
 @Table(name = "TICKMAN_TEAM")
@@ -15,7 +16,7 @@ public class Team {
     @Id
     @JmixGeneratedValue
     @Column(name = "ID", nullable = false)
-    private Integer id;
+    private UUID id;
 
     @Version
     @Column(name = "VERSION", nullable = false)
@@ -29,11 +30,11 @@ public class Team {
     @Column(name = "MEMBERS")
     private String members;
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

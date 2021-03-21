@@ -2,4 +2,6 @@
 <menu-config xmlns="http://jmix.io/schema/ui/menu">
     <item screen="tickman_Ticket.browse" caption="msg://com.haulmont.tickman.screen.ticket/ticketBrowse.caption"/>
     <item screen="tickman_Team.browse" caption="msg://com.haulmont.tickman.screen.team/teamBrowse.caption"/>
+    <item screen="tickman_Repository.browse"
+          caption="msg://com.haulmont.tickman.screen.repository/repositoryBrowse.caption"/>
 </menu-config>

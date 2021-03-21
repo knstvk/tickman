@@ -11,9 +11,6 @@ import java.util.stream.Collectors;
 @ConstructorBinding
 public class TickmanProperties {
 
-    private final String organization;
-    private final String repo;
-    private final int repoId;
     private final String zenHubToken; // TICKMAN_ZENHUBTOKEN
     private final String gitHubToken; // TICKMAN_GITHUBTOKEN
     private final List<Integer> estimateValues;
@@ -26,25 +23,10 @@ public class TickmanProperties {
                              String gitHubToken,
                              List<String> estimateValues,
                              List<String> pipelines) {
-        this.organization = organization;
-        this.repo = repo;
-        this.repoId = repoId;
         this.zenHubToken = zenHubToken;
         this.gitHubToken = gitHubToken;
         this.estimateValues = estimateValues != null ? estimateValues.stream().map(Integer::valueOf).collect(Collectors.toList()) : null;
         this.pipelines = pipelines;
-    }
-
-    public String getOrganization() {
-        return organization;
-    }
-
-    public String getRepo() {
-        return repo;
-    }
-
-    public int getRepoId() {
-        return repoId;
     }
 
     public String getZenHubToken() {
